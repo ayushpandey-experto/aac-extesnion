@@ -1,0 +1,665 @@
+{
+  "name": "16. Productivity workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "# 📱 Telegram Productivity Assistant\n\nThis workflow automatically processes different types of content sent via Telegram:\n- 📸 **Images**: Uploaded to Notion with captions\n- 📝 **Text**: Added as headings in Notion\n- 📁 **Files**: Stored in Google Drive with tracking",
+        "height": 540,
+        "width": 520
+      },
+      "id": "aff27898-ae11-4d91-99dd-4dea5d919156",
+      "name": "Main Description",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -880,
+        120
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "edb55de8-1a53-4693-83cb-60542f10d1d7",
+      "name": "📱 Telegram Message Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "position": [
+        -780,
+        380
+      ],
+      "webhookId": "1c4f6611-d006-4305-8c3b-a35690a03858",
+      "typeVersion": 1.1,
+      "credentials": {
+        "telegramApi": {
+          "id": "HTmNODGaUscEHOIF",
+          "name": "AI Employee"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "d7a05336-69bc-44c2-8b65-d5dfe4392aec",
+                    "operator": {
+                      "type": "array",
+                      "operation": "exists",
+                      "singleValue": true
+                    },
+                    "leftValue": "={{ $json.message.photo }}",
+                    "rightValue": ""
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Image"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "ad5f60f6-76a9-44b7-a02d-d5899894fb89",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    },
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": ""
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "=Text"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "eeb67e61-4a67-4abe-8a5e-841d8e82969d",
+                    "operator": {
+                      "type": "object",
+                      "operation": "exists",
+                      "singleValue": true
+                    },
+                    "leftValue": "={{ $json.message.document }}",
+                    "rightValue": ""
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "File"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a10be9ef-769a-4baf-941c-faa6b49e26cc",
+      "name": "🔀 Content Type Router",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        -540,
+        380
+      ],
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "content": "## 📸 IMAGE PROCESSING PATH\nHandles photos sent via Telegram:\n1. Downloads image from Telegram\n2. Converts to base64\n3. Uploads to ImgBB for hosting\n4. Adds to Notion with caption",
+        "height": 400,
+        "width": 870,
+        "color": 4
+      },
+      "id": "5dece25b-499a-4bca-8a9a-8336c8d51f75",
+      "name": "Image Path Description",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -140,
+        -60
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.photo[2].file_id }}"
+      },
+      "id": "8cd166ac-721a-4b1a-a719-906d57e90c13",
+      "name": "📥 Download Telegram Image",
+      "type": "n8n-nodes-base.telegram",
+      "position": [
+        280,
+        -20
+      ],
+      "webhookId": "eb105ffc-c110-4cb5-846d-714c1601a9b6",
+      "typeVersion": 1.2,
+      "credentials": {
+        "telegramApi": {
+          "id": "HTmNODGaUscEHOIF",
+          "name": "AI Employee"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "binaryToPropery",
+        "options": {}
+      },
+      "id": "b4e1fb91-48bf-4381-9ff3-64f5264d5d47",
+      "name": "🔄 Convert to Base64",
+      "type": "n8n-nodes-base.extractFromFile",
+      "position": [
+        540,
+        -20
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.imgbb.com/1/upload",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "expiration",
+              "value": "600"
+            },
+            {
+              "name": "key",
+              "value": "<api_key>"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "image",
+              "value": "={{ $json.data }}"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "id": "6f5ba49d-6c89-4ee9-bee0-6f0e47cc87dd",
+      "name": "🌐 Upload to ImgBB",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        280,
+        180
+      ],
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://api.notion.com/v1/blocks/1fdb06aa7d2e80b384a6eb99788f67fb/children",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"children\": [\n    {\n      \"object\": \"block\",\n      \"type\": \"toggle\",\n      \"toggle\": {\n        \"rich_text\": [\n          {\n            \"type\": \"text\",\n            \"text\": {\n              \"content\": \"{{ $('🔀 Content Type Router').item.json.message.caption }} - {{ $('📱 Telegram Message Trigger').item.json.message.from.first_name }} {{ $('📱 Telegram Message Trigger').item.json.message.from.last_name }}\"\n            }\n          }\n        ],\n        \"children\": [\n          {\n            \"object\": \"block\",\n            \"type\": \"image\",\n            \"image\": {\n              \"type\": \"external\",\n              \"external\": {\n                \"url\": \"{{ $json.data.url }}\"\n              }\n            }\n          }\n        ]\n      }\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "09b72e37-d148-4a2b-80f1-aaf74204c8b9",
+      "name": "📝 Add Image to Notion",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        540,
+        180
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "OTXO91Lx1ygu5w6m",
+          "name": "Lakshit Notion Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 📝 TEXT PROCESSING PATH\nHandles text messages sent via Telegram:\n- Adds text as heading in Notion page",
+        "height": 100,
+        "width": 350,
+        "color": 5
+      },
+      "id": "09fb153c-90dd-40b5-8198-92585b375509",
+      "name": "Text Path Description",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        200,
+        380
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "resource": "block",
+        "blockId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1fdb06aa7d2e80b384a6eb99788f67fb"
+        },
+        "blockUi": {
+          "blockValues": [
+            {
+              "type": "heading_3",
+              "textContent": "={{ $json.message.text }}"
+            }
+          ]
+        }
+      },
+      "id": "ad4164b2-9fad-40f2-b3e1-123ea05d0838",
+      "name": "📝 Add Text to Notion",
+      "type": "n8n-nodes-base.notion",
+      "position": [
+        580,
+        380
+      ],
+      "typeVersion": 2.2,
+      "credentials": {
+        "notionApi": {
+          "id": "kRSdLPqa2uISxm89",
+          "name": "Lakshit Notion Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 📁 FILE PROCESSING PATH\nHandles document files sent via Telegram:\n1. Downloads file from Telegram\n2. Uploads to Google Drive\n3. Records file details in Google Sheets\n4. Tracks: name, uploader, size, type, creation date",
+        "height": 500,
+        "width": 770,
+        "color": 6
+      },
+      "id": "483ee320-6b44-428a-b0e5-914bb59dab5d",
+      "name": "File Path Description",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -340,
+        520
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.document.file_id }}"
+      },
+      "id": "fdd71a1b-1f9c-4806-aedd-eea1652ca956",
+      "name": "📥 Download Telegram File",
+      "type": "n8n-nodes-base.telegram",
+      "position": [
+        20,
+        640
+      ],
+      "webhookId": "daf3efb6-7ba8-4c33-b0bd-83987b86851b",
+      "typeVersion": 1.2,
+      "credentials": {
+        "telegramApi": {
+          "id": "HTmNODGaUscEHOIF",
+          "name": "AI Employee"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "={{ $('📱 Telegram Message Trigger').item.json.message.document.file_name }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1Y9p3y0P7X39ZnMCH16iFpJbRofLnmR9u",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1Y9p3y0P7X39ZnMCH16iFpJbRofLnmR9u",
+          "cachedResultName": "n8n"
+        },
+        "options": {}
+      },
+      "id": "997df489-b04e-45b8-8bb6-79f27cbb2dc2",
+      "name": "☁️ Upload to Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        20,
+        860
+      ],
+      "typeVersion": 3,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "mKBEbVvdjhh9SFpW",
+          "name": "Google Drive Lakshit77 account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1RZs7yzvmJZrlHMonYhHNrgmyNIBlYaZt3Lp5XY5fen0",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RZs7yzvmJZrlHMonYhHNrgmyNIBlYaZt3Lp5XY5fen0/edit?usp=drivesdk",
+          "cachedResultName": "File Storage"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RZs7yzvmJZrlHMonYhHNrgmyNIBlYaZt3Lp5XY5fen0/edit#gid=0",
+          "cachedResultName": "Sheet1"
+        },
+        "columns": {
+          "value": {
+            "File Size": "={{ ($json.size / (1024 * 1024)).toFixed(2) }} mb",
+            "File Type": "={{ $json.fileExtension }}",
+            "Created At": "={{ $json.createdTime.toDateTime().toFormat(\"dd-MM-yyyy HH:mm\") }}",
+            "Drive Link": "={{ $json.webViewLink }}",
+            "File Name ": "={{ $('🔀 Content Type Router').item.json.message.document.file_name }}",
+            "Person Uploaded": "={{ $('🔀 Content Type Router').item.json.message.from.first_name }} {{ $('🔀 Content Type Router').item.json.message.from.last_name }}"
+          },
+          "schema": [
+            {
+              "id": "Person Uploaded",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "Person Uploaded",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "File Name ",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "File Name ",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Created At",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "Created At",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "File Type",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "File Type",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "File Size",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "File Size",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Drive Link",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "Drive Link",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "mappingMode": "defineBelow",
+          "matchingColumns": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "72c45ebd-905d-4f45-bdf4-e7c36d594753",
+      "name": "📊 Record in Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        240,
+        740
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uvQG3YEEXtu5NVSj",
+          "name": "Freelance Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## ✅ COMPLETION NOTIFICATION\nSends confirmation message back to Telegram user after successful processing",
+        "height": 380,
+        "width": 300,
+        "color": 3
+      },
+      "id": "394c9d20-eb1b-4a1b-8668-d66c7a8d6803",
+      "name": "Completion Description",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        900,
+        220
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('📱 Telegram Message Trigger').item.json.message.chat.id }}",
+        "text": "✅ Task Completed Successfully! Your content has been processed and saved.",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "e499f4c3-4175-4d50-a0ac-d2dd30e6dca8",
+      "name": "✅ Send Completion Message",
+      "type": "n8n-nodes-base.telegram",
+      "position": [
+        1000,
+        380
+      ],
+      "webhookId": "5cf134ee-b78d-4603-bb13-a88ff5f42f7b",
+      "typeVersion": 1.2,
+      "credentials": {
+        "telegramApi": {
+          "id": "HTmNODGaUscEHOIF",
+          "name": "AI Employee"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "🌐 Upload to ImgBB": {
+      "main": [
+        [
+          {
+            "node": "📝 Add Image to Notion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔄 Convert to Base64": {
+      "main": [
+        [
+          {
+            "node": "🌐 Upload to ImgBB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📝 Add Text to Notion": {
+      "main": [
+        [
+          {
+            "node": "✅ Send Completion Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📝 Add Image to Notion": {
+      "main": [
+        [
+          {
+            "node": "✅ Send Completion Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔀 Content Type Router": {
+      "main": [
+        [
+          {
+            "node": "📥 Download Telegram Image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "📝 Add Text to Notion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "📥 Download Telegram File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📥 Download Telegram File": {
+      "main": [
+        [
+          {
+            "node": "☁️ Upload to Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📊 Record in Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "✅ Send Completion Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📥 Download Telegram Image": {
+      "main": [
+        [
+          {
+            "node": "🔄 Convert to Base64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "☁️ Upload to Google Drive": {
+      "main": [
+        [
+          {
+            "node": "📊 Record in Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📱 Telegram Message Trigger": {
+      "main": [
+        [
+          {
+            "node": "🔀 Content Type Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "501f9f12-59d9-4128-bb5b-908a72bbbd9e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "353ac65d120d2007b8a1503e85a96651a9b2cbb94b0334693ebac2129fa6a7ee"
+  },
+  "id": "oaMhOjKuw686pFxa",
+  "tags": []
+}
