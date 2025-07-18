@@ -1,0 +1,258 @@
+{
+  "name": "26. n8n_twillio_whatsapp",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "com.twilio.messaging.inbound-message.received"
+        ]
+      },
+      "type": "n8n-nodes-base.twilioTrigger",
+      "typeVersion": 1,
+      "position": [
+        -340,
+        -100
+      ],
+      "id": "1b21803c-da73-4626-a219-ed7ac4489788",
+      "name": "Twilio Trigger",
+      "webhookId": "143ac550-4e57-4804-9859-531a785740c7",
+      "credentials": {
+        "twilioApi": {
+          "id": "eLsrOAjIUDd7kBEm",
+          "name": "Twilio account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "from": "={{ $('Twilio Trigger').item.json.data.to.replace('whatsapp:','') }}",
+        "to": "={{ $('Twilio Trigger').item.json.data.from.replace('whatsapp:','') }}",
+        "toWhatsapp": true,
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        240,
+        -100
+      ],
+      "id": "e982287f-7b7d-479c-900a-18ecc1c6ee8b",
+      "name": "Twilio",
+      "credentials": {
+        "twilioApi": {
+          "id": "eLsrOAjIUDd7kBEm",
+          "name": "Twilio account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "assistant",
+        "assistantId": {
+          "__rl": true,
+          "value": "asst_j5ZLE3VDO8A32O0J5R9AmO44",
+          "mode": "list",
+          "cachedResultName": "Amazon WA "
+        },
+        "prompt": "define",
+        "text": "=User Message:  {{ $json.data.body }}\n\nCurrent Timestamp: {{ $now }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -120,
+        -100
+      ],
+      "id": "77c82626-3b15-48c4-b554-3931352258d9",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "69W0MY1rH5ycGoOb",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Twilio Trigger').item.json.data.from.replace('whatsapp:','') }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        140,
+        140
+      ],
+      "id": "d9ed940f-5b35-416f-80da-94cffee069ea",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appSfSdqK1Jw6oCZW",
+          "mode": "list",
+          "cachedResultName": "Inventory Management",
+          "cachedResultUrl": "https://airtable.com/appSfSdqK1Jw6oCZW"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblWW7xK2JI2iAG9i",
+          "mode": "list",
+          "cachedResultName": "Order Logs",
+          "cachedResultUrl": "https://airtable.com/appSfSdqK1Jw6oCZW/tblWW7xK2JI2iAG9i"
+        },
+        "filterByFormula": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Filter_By_Formula', `Filter based on \"Order ID\"`, 'string') }}",
+        "returnAll": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Return_All', ``, 'boolean') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        -20,
+        140
+      ],
+      "id": "bfd9ab74-db9f-4cc6-b946-32a7f1c7c245",
+      "name": "search_order_record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "wXI25odTh8CHtWDk",
+          "name": "Airtable Account Freelance"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appSfSdqK1Jw6oCZW",
+          "mode": "list",
+          "cachedResultName": "Inventory Management",
+          "cachedResultUrl": "https://airtable.com/appSfSdqK1Jw6oCZW"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbltTz9rYEPnO6ycV",
+          "mode": "list",
+          "cachedResultName": "Inventory",
+          "cachedResultUrl": "https://airtable.com/appSfSdqK1Jw6oCZW/tbltTz9rYEPnO6ycV"
+        },
+        "filterByFormula": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Filter_By_Formula', `Filter Based on Price and Category, keep field as case insensitive`, 'string') }}",
+        "returnAll": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Return_All', ``, 'boolean') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        -180,
+        140
+      ],
+      "id": "3838c5fe-249f-458e-b1c0-9c9d1000d705",
+      "name": "search_inventory",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "wXI25odTh8CHtWDk",
+          "name": "Airtable Account Freelance"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function removeAnnotations (input) {\n  return input. replace(/ [[^]]*] /g, \"').trim);\n}\n\n// Example usage\nconst output = removeAnnotations (query);\nreturn output;|"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.2,
+      "position": [
+        -340,
+        140
+      ],
+      "id": "bcdc4019-54b7-4dd1-98be-3ff27a8913ec",
+      "name": "clean_output"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Twilio Trigger": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "search_order_record": {
+      "ai_tool": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "search_inventory": {
+      "ai_tool": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Twilio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "clean_output": {
+      "ai_tool": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "53af03a5-679c-4807-891e-bfdf7ad5de37",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "353ac65d120d2007b8a1503e85a96651a9b2cbb94b0334693ebac2129fa6a7ee"
+  },
+  "id": "74bFl0jyrXGoEmEN",
+  "tags": []
+}
