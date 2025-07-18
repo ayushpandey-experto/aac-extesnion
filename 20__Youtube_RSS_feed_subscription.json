@@ -1,0 +1,314 @@
+{
+  "name": "20. Youtube RSS feed subscription",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        1240
+      ],
+      "id": "dee163ab-cfe3-49c9-9530-53c607cef805",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "content": "## 🎬 YouTube Channel Auto-Notification System\n\n### 📋 What This Workflow Does:\n- **Subscribes** to YouTube channel notifications using PubSubHubbub\n- **Receives** real-time notifications when new videos are uploaded\n- **Logs** video details automatically to Google Sheets\n- **Responds** to YouTube's verification challenges\n\n### 🔧 Setup Requirements:\n1. Replace channel ID in subscription URL\n2. Configure webhook endpoint\n3. Set up Google Sheets credentials\n4. Update verify token if needed\n\n### ⚡ Auto-Trigger:\nOnce set up, this workflow automatically runs whenever a new video is published on the monitored YouTube channel!",
+        "height": 420,
+        "width": 800,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1540,
+        820
+      ],
+      "id": "c90ee863-6be2-48c1-b7e0-95443120bdf0",
+      "name": "📋 Workflow Overview"
+    },
+    {
+      "parameters": {
+        "content": "## 🔐 Subscription Setup Process\n\n### Step 1: Manual Subscription\n- **One-time setup** to register webhook with YouTube\n- Sends subscription request to Google's PubSubHubbub service\n- Includes callback URL, channel ID, and verification tokens\n\n### 📝 Key Parameters:\n- **hub.callback**: Your n8n webhook URL\n- **hub.topic**: YouTube channel feed URL\n- **hub.verify_token**: Security token (lakshit)\n- **hub.lease_seconds**: Subscription duration (10 days)\n\n### ⚠️ Important:\n- Run this manually once to establish the subscription!\n- Schedule to run this every 4 to 5 days to subscribe to channel again, because one subscription last max 10 days",
+        "height": 420,
+        "width": 600,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        780
+      ],
+      "id": "8e2048cb-a5fd-44fa-800c-82860b4242ea",
+      "name": "🔐 Subscription Setup"
+    },
+    {
+      "parameters": {
+        "content": "## 🎯 Auto-Processing Pipeline\n\n### Verification Flow:\n1. **YouTube Challenge** → Verify webhook ownership\n2. **Token Validation** → Confirm security token\n3. **Challenge Response** → Send back verification code\n\n### Notification Flow:\n1. **New Video Alert** → Real-time notification received\n2. **Data Extraction** → Parse video ID and URL\n3. **Sheet Update** → Log to Google Sheets automatically\n\n### 📊 Data Captured:\n- Video ID\n- YouTube video link\n- Status (ready for processing)",
+        "height": 420,
+        "width": 800,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1820,
+        1420
+      ],
+      "id": "0fd45ae6-072e-4690-a78f-165daea9b3b2",
+      "name": "🎯 Processing Pipeline"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://pubsubhubbub.appspot.com/subscribe",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "hub.callback",
+              "value": "https://lakshit1996.app.n8n.cloud/webhook/youtube-trigger"
+            },
+            {
+              "name": "hub.topic",
+              "value": "https://www.youtube.com/xml/feeds/videos.xml?channel_id=UCpuKtSx_Cu8_ikyhlKAWBYA"
+            },
+            {
+              "name": "hub.verify",
+              "value": "async"
+            },
+            {
+              "name": "hub.mode",
+              "value": "subscribe"
+            },
+            {
+              "name": "hub.verify_token",
+              "value": "lakshit"
+            },
+            {
+              "name": "hub.secret",
+              "value": "lakshit"
+            },
+            {
+              "name": "hub.lease_seconds",
+              "value": "864000"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -440,
+        1240
+      ],
+      "id": "5215cae1-10e4-44cb-9b0a-2ff4d10c1cb9",
+      "name": "📡 Subscribe to YouTube Notifications"
+    },
+    {
+      "parameters": {
+        "multipleMethods": true,
+        "path": "youtube-trigger",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -920,
+        1480
+      ],
+      "id": "4c5ceb28-3dfb-4b0d-afc5-440b46102d42",
+      "name": "🎣 YouTube Webhook Listener",
+      "webhookId": "9a52c0db-7902-45d3-8640-fa8693bb620c"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.challenge }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.3,
+      "position": [
+        -300,
+        1460
+      ],
+      "id": "fdf7f887-04ed-4ba8-b444-6c6022361b2a",
+      "name": "✅ Send Verification Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "const query = $input.first().json.query;\nconst verifyToken = query['hub.verify_token'];\nconst challenge = query['hub.challenge'];\nconst mode = query['hub.mode'];\n\n// Verify the token matches what you sent (yours is \"lakshit\")\nif (verifyToken === 'lakshit' && mode === 'subscribe') {\n  return [{\n    json: {\n      challenge: challenge,\n      status: 200,\n      message: 'Verification successful'\n    }\n  }];\n} else {\n  return [{\n    json: {\n      challenge: 'Forbidden',\n      status: 403,\n      message: 'Invalid verification'\n    }\n  }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -520,
+        1460
+      ],
+      "id": "60034b57-1654-4162-8fc2-53874d395ad1",
+      "name": "🔐 Validate Security Token"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1QwZDdM51H8_41fqz_xsvt5xrdRAu6rLslYjCslzo9Ag",
+          "mode": "list",
+          "cachedResultName": "Youtube to Blog",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QwZDdM51H8_41fqz_xsvt5xrdRAu6rLslYjCslzo9Ag/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QwZDdM51H8_41fqz_xsvt5xrdRAu6rLslYjCslzo9Ag/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Video ID": "={{ $json.body.feed.entry['yt:videoid'] }}",
+            "Youtube Video Link": "={{ $json.body.feed.entry.link.$.href }}",
+            "Status": "ready"
+          },
+          "matchingColumns": [
+            "Video ID"
+          ],
+          "schema": [
+            {
+              "id": "Youtube Video Link",
+              "displayName": "Youtube Video Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Video ID",
+              "displayName": "Video ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -560,
+        1680
+      ],
+      "id": "5fe4205f-535f-4054-a0c9-52be2aa4eb12",
+      "name": "📊 Log to Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uvQG3YEEXtu5NVSj",
+          "name": "Freelance Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 👨‍💻 Creator Information\n\n**Created by:** Lakshit Ukani  \n🔗 **LinkedIn:** [Connect with me](https://www.linkedin.com/in/lakshit-ukani/)\n🔗 **Youtube:** [Subscribe to my Channel](https://www.youtube.com/@lakshit-ukani?sub_confirmation=1)\n\n### 🤝 Community & Support\n💬 **Join Community:** [Skool Community Link](https://www.skool.com/ai-automation-club-7843)   \n📚 **Documentation:** [YouTube PubSubHubbub Guide](https://developers.google.com/youtube/v3/guides/push_notifications)  \n\n### 📞 Need Help?\n- **Quick Questions:** Comment on the YouTube video\n- **Workflow Issues:** Post in our community  \n- **Business Inquiries:** Connect via LinkedIn",
+        "height": 300,
+        "width": 520,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        40,
+        1440
+      ],
+      "id": "b620c082-edc1-4ef2-a84a-065402645294",
+      "name": "👨‍💻 Creator Info"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "📡 Subscribe to YouTube Notifications",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🎣 YouTube Webhook Listener": {
+      "main": [
+        [
+          {
+            "node": "🔐 Validate Security Token",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "📊 Log to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔐 Validate Security Token": {
+      "main": [
+        [
+          {
+            "node": "✅ Send Verification Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1f5ccc83-e36e-438d-acbf-821fa71419d3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "353ac65d120d2007b8a1503e85a96651a9b2cbb94b0334693ebac2129fa6a7ee"
+  },
+  "id": "eiTZuQBbabzj0BWA",
+  "tags": []
+}
