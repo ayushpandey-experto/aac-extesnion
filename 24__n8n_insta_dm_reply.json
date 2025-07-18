@@ -1,0 +1,253 @@
+{
+  "name": "24. n8n_insta_dm_reply",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "={{ $json.property_file[0] }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        460,
+        -40
+      ],
+      "id": "3e7bc27f-b456-4df7-949a-3b9dc05ad595",
+      "name": "Download Resource File"
+    },
+    {
+      "parameters": {
+        "formTitle": "Template Data",
+        "formDescription": "Please fill out the details below so we can send your requested resource directly to your inbox.\nSelect the word you commented on Instagram — it helps us deliver the right content to the right person!",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Name ",
+              "placeholder": "Your full name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email Id",
+              "fieldType": "email",
+              "placeholder": "Enter your email – you’ll receive the resource here",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Comment Word",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "RAG"
+                  },
+                  {
+                    "option": "automation"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -220,
+        -40
+      ],
+      "id": "ed62a4de-da57-454c-b83a-42eb554005df",
+      "name": "Lead Magnet Form Submission",
+      "webhookId": "7853acc3-5d71-4500-a312-b816697b3bec"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {
+          "__rl": true,
+          "value": "221b06aa-7d2e-8022-8d78-e79e0efaf861",
+          "mode": "list",
+          "cachedResultName": "Automate DM",
+          "cachedResultUrl": "https://www.notion.so/221b06aa7d2e80228d78e79e0efaf861"
+        },
+        "limit": 1,
+        "filterType": "manual",
+        "filters": {
+          "conditions": [
+            {
+              "key": "Tags|multi_select",
+              "condition": "contains",
+              "multiSelectValue": "={{ $json['Comment Word'] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        -20,
+        -40
+      ],
+      "id": "d554f0fa-46c3-4c43-9003-1f713f8f504c",
+      "name": "Fetch Resource from Notion Database",
+      "credentials": {
+        "notionApi": {
+          "id": "kRSdLPqa2uISxm89",
+          "name": "Lakshit Notion Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst formSubmission = $(\"Lead Magnet Form Submission\").all()[0];\n\nconst updatedItems = items.map((item) => {\n  item.json.property_body = item.json.property_body.replace(\n    \"[First Name]\",\n    formSubmission.json[\"Name \"],\n  );\n  return item;\n});\n\nreturn updatedItems;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        -40
+      ],
+      "id": "9089402a-21e9-4035-9870-9e86f772a229",
+      "name": "Personalize Email Content"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Lead Magnet Form Submission').item.json['Email Id'] }}",
+        "subject": "={{ $json.property_subject }}",
+        "message": "={{ $('Personalize Email Content').item.json.property_body }}",
+        "options": {
+          "appendAttribution": false,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        700,
+        -40
+      ],
+      "id": "553a5177-f898-42ac-9f3f-8dd855303120",
+      "name": "Send Personalized Resource Email",
+      "webhookId": "4a2b23f6-955b-4957-8e6c-88e8f7625f39",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hsdHDoXhllFhyisx",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 🎯 Automated Lead Magnet Delivery System\n\n**Complete Flow:**\n1. **📝 Form Submission** → User fills out lead magnet form with name, email & resource type\n2. **🔍 Resource Lookup** → System fetches matching resource from Notion database based on selected tag\n3. **✏️ Content Personalization** → Email template customized with user's first name\n4. **📥 File Download** → Resource file downloaded from stored URL in Notion\n5. **📧 Email Delivery** → Personalized email sent with resource attachment\n\n**Key Features:**\n- Dynamic resource selection based on user choice (RAG vs Automation)\n- Automatic email personalization\n- Seamless file attachment delivery\n- Notion-powered content management",
+        "height": 360,
+        "width": 640
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -340,
+        -480
+      ],
+      "id": "0b345f5a-c7d0-4588-9ea5-7a7398e4dd97",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## ⚙️ Setup Requirements\n\n**1. Notion Database Setup:**\n- Create database with fields: Tags (multi-select), Subject, Body, File URL\n- Add resources with tags matching form options (\"automation\", \"rag\")\n- Include \"[First Name]\" placeholder in email body template\n\n**2. Form Configuration:**\n- Update dropdown options to match your available resources\n- Customize form title and description for your brand\n- Test form submission before going live\n\n**3. Email Setup:**\n- Configure Gmail OAuth2 credentials\n- Test email delivery and attachment functionality\n- Verify email templates render correctly",
+        "height": 360,
+        "width": 680
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        340,
+        -480
+      ],
+      "id": "5216834e-42ff-4981-be60-0e048a75e710",
+      "name": "Sticky Note1"
+    }
+  ],
+  "pinData": {
+    "Lead Magnet Form Submission": [
+      {
+        "json": {
+          "Name ": "Lakshit",
+          "Email Id": "freelance3015@gmail.com",
+          "Comment Word": "Automation",
+          "submittedAt": "2025-06-30T00:21:02.503+05:30",
+          "formMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Download Resource File": {
+      "main": [
+        [
+          {
+            "node": "Send Personalized Resource Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Magnet Form Submission": {
+      "main": [
+        [
+          {
+            "node": "Fetch Resource from Notion Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Resource from Notion Database": {
+      "main": [
+        [
+          {
+            "node": "Personalize Email Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Personalize Email Content": {
+      "main": [
+        [
+          {
+            "node": "Download Resource File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "59e499a0-332f-4452-9c56-68b36ab5e34b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "353ac65d120d2007b8a1503e85a96651a9b2cbb94b0334693ebac2129fa6a7ee"
+  },
+  "id": "q1pECKXvgtFcWd7d",
+  "tags": []
+}
