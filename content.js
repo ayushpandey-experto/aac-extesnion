@@ -25,6 +25,10 @@ class AIChatExtension {
     this.updatePinnedFunctionPill();
     this.renderTemplates();
     
+    // Setup enhanced input validation and animations
+    this.setupInputValidation();
+    this.addShakeAnimation();
+    
     // Listen for license status changes
     chrome.storage.onChanged.addListener((changes, area) => {
         if (area === 'local' && changes.licenseValid) {
@@ -34,58 +38,298 @@ class AIChatExtension {
   }
 
   async checkLicenseStatus() {
-    const data = await chrome.storage.local.get(['licenseValid', 'lastVerificationMonth', 'lastVerificationYear']);
+    const data = await chrome.storage.local.get([
+        'licenseValid', 
+        'licenseEmail', 
+        'licenseKey',
+        'lastVerificationMonth', 
+        'lastVerificationYear'
+    ]);
+    
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
-    if (data.licenseValid && data.lastVerificationYear !== undefined && data.lastVerificationMonth !== undefined) {
-        // A license was previously valid. Check if it's a new month.
-        if (currentYear > data.lastVerificationYear || (currentYear === data.lastVerificationYear && currentMonth > data.lastVerificationMonth)) {
-            // It's a new month, re-verification is required.
+    if (data.licenseValid && 
+        data.licenseEmail && 
+        data.licenseKey && 
+        data.lastVerificationYear !== undefined && 
+        data.lastVerificationMonth !== undefined) {
+        
+        // Check if it's a new month (require re-verification)
+        if (currentYear > data.lastVerificationYear || 
+            (currentYear === data.lastVerificationYear && currentMonth > data.lastVerificationMonth)) {
+            // It's a new month, re-verification is required
             this.isLicensed = false;
             await chrome.storage.local.set({ licenseValid: false });
         } else {
-            // Still the same month, license is valid.
+            // Still the same month, license is valid
             this.isLicensed = true;
         }
     } else {
-        // No valid license or verification date found.
+        // No valid license or missing email/key found
         this.isLicensed = false;
     }
   }
 
-  handleLicenseActivation() {
-      const input = document.getElementById('ai-license-key-input');
-      const key = input.value.trim();
-      const statusDiv = document.getElementById('ai-license-status');
-      statusDiv.style.display = 'block';
+// FIXED LICENSE VALIDATION PART OF CONTENT.JS
+// Replace the handleLicenseActivation method in your content.js with this:
 
-      if (!key) {
-          statusDiv.textContent = 'Please enter a key.';
-          statusDiv.className = 'license-status error';
-          return;
-      }
+handleLicenseActivation() {
+    const emailInput = document.getElementById('ai-license-email-input');
+    const keyInput = document.getElementById('ai-license-key-input');
+    const email = emailInput.value.trim();
+    const key = keyInput.value.trim();
+    const statusDiv = document.getElementById('ai-license-status');
+    const activateBtn = document.getElementById('ai-activate-license-btn');
+    
+    // Clear previous states
+    this.clearInputValidation();
+    statusDiv.style.display = 'none';
+    statusDiv.className = 'license-status-modern';
 
-      statusDiv.textContent = 'Activating...';
-      statusDiv.className = 'license-status loading';
+    // SIMPLIFIED validation - just check if fields have values
+    let hasErrors = false;
 
-      chrome.runtime.sendMessage({ action: 'validateLicense', licenseKey: key }, (response) => {
-          if (response && response.valid) {
-              statusDiv.textContent = '✓ Valid! Extension activated.';
-              statusDiv.className = 'license-status success';
-              this.isLicensed = true; 
+    if (!email) {
+        this.showInputError(emailInput, 'Please enter your email address.');
+        hasErrors = true;
+    } else if (!this.isValidEmail(email)) {
+        this.showInputError(emailInput, 'Please enter a valid email address.');
+        hasErrors = true;
+    } else {
+        this.showInputSuccess(emailInput);
+    }
 
-              setTimeout(() => {
-                  document.getElementById('ai-license-panel').style.display = 'none';
-                  document.getElementById('ai-main-content').style.display = 'flex';
-                  this.restartChat();
-              }, 1500);
-          } else {
-              statusDiv.textContent = '✗ Invalid or inactive key. Please try again.';
-              statusDiv.className = 'license-status error';
+    if (!key) {
+        this.showInputError(keyInput, 'Please enter your license key.');
+        hasErrors = true;
+    } else {
+        // REMOVED the length check - accept any key length
+        this.showInputSuccess(keyInput);
+    }
+
+    if (hasErrors) {
+        return;
+    }
+
+    // Start loading state
+    this.setButtonLoading(activateBtn, true);
+    this.showStatus('Validating your license...', 'loading');
+
+    // Add debug logging
+    console.log('🚀 Sending license validation request');
+    console.log('📧 Email:', email);
+    console.log('🔑 Key:', key);
+
+    // Send validation request
+    chrome.runtime.sendMessage({ 
+        action: 'validateLicense', 
+        email: email,
+        licenseKey: key 
+    }, (response) => {
+        console.log('📦 Validation response received:', response);
+        
+        this.setButtonLoading(activateBtn, false);
+        
+        if (response && response.valid) {
+            console.log('✅ License validation successful!');
+            this.setButtonSuccess(activateBtn);
+            this.showStatus('✨ License activated successfully! Welcome aboard!', 'success');
+            this.isLicensed = true;
+
+            // Celebrate with confetti effect
+            this.triggerSuccessAnimation();
+
+            setTimeout(() => {
+                document.getElementById('ai-license-panel').style.display = 'none';
+                document.getElementById('ai-main-content').style.display = 'flex';
+                this.restartChat();
+            }, 2000);
+        } else {
+            console.log('❌ License validation failed');
+            this.showStatus('❌ Invalid email or license key. Please check your credentials and try again.', 'error');
+            this.setButtonError(activateBtn);
+        }
+    });
+}
+
+  // Input validation helpers
+  clearInputValidation() {
+      const inputs = ['ai-license-email-input', 'ai-license-key-input'];
+      inputs.forEach(id => {
+          const input = document.getElementById(id);
+          if (input) {
+              const wrapper = input.parentElement;
+              wrapper.classList.remove('valid', 'error');
           }
       });
+  }
+
+  showInputError(input, message) {
+      const wrapper = input.parentElement;
+      wrapper.classList.remove('valid');
+      wrapper.classList.add('error');
+      
+      // Add shake animation
+      input.style.animation = 'shake 0.5s ease-in-out';
+      setTimeout(() => {
+          input.style.animation = '';
+      }, 500);
+  }
+
+  showInputSuccess(input) {
+      const wrapper = input.parentElement;
+      wrapper.classList.remove('error');
+      wrapper.classList.add('valid');
+  }
+
+  // Status message helpers
+  showStatus(message, type) {
+      const statusDiv = document.getElementById('ai-license-status');
+      if (statusDiv) {
+          statusDiv.textContent = message;
+          statusDiv.className = `license-status-modern ${type}`;
+          statusDiv.style.display = 'block';
+      }
+  }
+
+  // Button state helpers
+  setButtonLoading(button, loading) {
+      if (loading) {
+          button.classList.add('loading');
+          button.disabled = true;
+      } else {
+          button.classList.remove('loading');
+          button.disabled = false;
+      }
+  }
+
+  setButtonSuccess(button) {
+      button.classList.remove('loading');
+      button.classList.add('success');
+      button.disabled = true;
+  }
+
+  setButtonError(button) {
+      button.classList.remove('loading', 'success');
+      button.disabled = false;
+      
+      // Add error shake
+      button.style.animation = 'shake 0.5s ease-in-out';
+      setTimeout(() => {
+          button.style.animation = '';
+      }, 500);
+  }
+
+  // Success animation
+  triggerSuccessAnimation() {
+      // Create temporary success overlay
+      const overlay = document.createElement('div');
+      overlay.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(16, 185, 129, 0.1);
+          z-index: 10003;
+          pointer-events: none;
+          animation: successFlash 0.6s ease-out;
+      `;
+      
+      document.body.appendChild(overlay);
+      
+      setTimeout(() => {
+          overlay.remove();
+      }, 600);
+  }
+
+  // Enhanced email validation
+  isValidEmail(email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email) && email.length <= 254;
+  }
+
+  // Real-time input validation
+  setupInputValidation() {
+      // Use setTimeout to ensure elements exist
+      setTimeout(() => {
+          const emailInput = document.getElementById('ai-license-email-input');
+          const keyInput = document.getElementById('ai-license-key-input');
+          
+          if (!emailInput || !keyInput) return;
+
+          // Email input validation
+          emailInput.addEventListener('blur', () => {
+              const email = emailInput.value.trim();
+              if (email) {
+                  if (this.isValidEmail(email)) {
+                      this.showInputSuccess(emailInput);
+                  } else {
+                      this.showInputError(emailInput);
+                  }
+              }
+          });
+
+          emailInput.addEventListener('input', () => {
+              const wrapper = emailInput.parentElement;
+              if (wrapper.classList.contains('error') || wrapper.classList.contains('valid')) {
+                  wrapper.classList.remove('error', 'valid');
+              }
+          });
+
+          // License key input validation
+          keyInput.addEventListener('blur', () => {
+              const key = keyInput.value.trim();
+              if (key) {
+                  if (key.length >= 10) {
+                      this.showInputSuccess(keyInput);
+                  } else {
+                      this.showInputError(keyInput);
+                  }
+              }
+          });
+
+          keyInput.addEventListener('input', () => {
+              const wrapper = keyInput.parentElement;
+              if (wrapper.classList.contains('error') || wrapper.classList.contains('valid')) {
+                  wrapper.classList.remove('error', 'valid');
+              }
+          });
+
+          // Enter key support
+          const handleEnterKey = (e) => {
+              if (e.key === 'Enter') {
+                  e.preventDefault();
+                  this.handleLicenseActivation();
+              }
+          };
+
+          emailInput.addEventListener('keydown', handleEnterKey);
+          keyInput.addEventListener('keydown', handleEnterKey);
+      }, 100);
+  }
+
+  // Add shake animation CSS
+  addShakeAnimation() {
+      if (!document.getElementById('shake-animation-style')) {
+          const style = document.createElement('style');
+          style.id = 'shake-animation-style';
+          style.textContent = `
+              @keyframes shake {
+                  0%, 100% { transform: translateX(0); }
+                  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                  20%, 40%, 60%, 80% { transform: translateX(5px); }
+              }
+              @keyframes successFlash {
+                  0% { opacity: 0; }
+                  50% { opacity: 1; }
+                  100% { opacity: 0; }
+              }
+          `;
+          document.head.appendChild(style);
+      }
   }
 
   createChatButton() {
@@ -163,15 +407,103 @@ class AIChatExtension {
         </div>
 
         <div class="ai-license-panel" id="ai-license-panel">
-          <div class="ai-license-header">
-            <h3>Add Licence Key</h3>
-          </div>
-          <div class="ai-license-content-inner">
-            <p>Enter your license key to activate all features</p>
-            <input type="text" id="ai-license-key-input" placeholder="Enter your license key">
-            <div id="ai-license-status" class="license-status"></div>
-            <button id="ai-activate-license-btn" class="ai-btn-license">Activate</button>
-            <button id="ai-get-license-btn" class="ai-btn-license get-key">Get a Key</button>
+          <div class="ai-license-container">
+            <!-- Header Section -->
+            <div class="ai-license-header-modern">
+              <div class="license-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <circle cx="12" cy="16" r="1"></circle>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </div>
+              <h2 class="license-title">Activate Your License</h2>
+              <p class="license-subtitle">Unlock all premium features with your license key</p>
+            </div>
+
+            <!-- Form Section -->
+            <div class="ai-license-form">
+              <!-- Email Input Group -->
+              <div class="input-group">
+                <label class="input-label">Email Address</label>
+                <div class="input-wrapper">
+                  <div class="input-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                      <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                  </div>
+                  <input type="email" id="ai-license-email-input" placeholder="Enter your email address" required>
+                  <div class="input-validation-icon"></div>
+                </div>
+              </div>
+
+              <!-- License Key Input Group -->
+              <div class="input-group">
+                <label class="input-label">License Key</label>
+                <div class="input-wrapper">
+                  <div class="input-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+                    </svg>
+                  </div>
+                  <input type="text" id="ai-license-key-input" placeholder="Enter your license key" required>
+                  <div class="input-validation-icon"></div>
+                </div>
+              </div>
+
+              <!-- Status Message -->
+              <div id="ai-license-status" class="license-status-modern"></div>
+
+              <!-- Action Buttons -->
+              <div class="license-actions">
+                <button id="ai-activate-license-btn" class="btn-primary-modern">
+                  <span class="btn-text">Activate License</span>
+                  <div class="btn-loader">
+                    <div class="loader-spinner"></div>
+                  </div>
+                  <div class="btn-success-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                      <polyline points="20,6 9,17 4,12"></polyline>
+                    </svg>
+                  </div>
+                </button>
+                
+                <button id="ai-get-license-btn" class="btn-secondary-modern">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15,3 21,3 21,9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                  </svg>
+                  Get a License
+                </button>
+              </div>
+            </div>
+
+            <!-- Features Preview -->
+            <div class="features-preview">
+              <div class="features-title">What you'll get:</div>
+              <div class="features-list">
+                <div class="feature-item">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20,6 9,17 4,12"></polyline>
+                  </svg>
+                  <span>Advanced AI Functions</span>
+                </div>
+                <div class="feature-item">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20,6 9,17 4,12"></polyline>
+                  </svg>
+                  <span>Premium Templates</span>
+                </div>
+                <div class="feature-item">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20,6 9,17 4,12"></polyline>
+                  </svg>
+                  <span>Priority Support</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -304,6 +636,9 @@ class AIChatExtension {
             }
         }
     });
+
+    // Setup enhanced input validation
+    this.setupInputValidation();
   }
 
   toggleFunctionTray() {
