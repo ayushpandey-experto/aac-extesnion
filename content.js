@@ -1,36 +1,99 @@
+const SUPABASE_URL = 'https://isyxnxvaitseqqkbqaua.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // full anon key
+
 // Content script for AI Chat Assistant
 class AIChatExtension {
   constructor() {
     this.isOpen = false;
     this.apiKey = null;
+    this.isLicensed = false;
     this.chatHistory = [];
     this.selectedFunction = 'optimize_prompt';
     this.isFunctionTrayOpen = true;
-    this.isTemplatesPanelOpen = false; // NEW: State for templates panel
+    this.isTemplatesPanelOpen = false;
     this.init();
   }
 
   async init() {
-    // Load settings and create UI elements based on them
-    chrome.storage.sync.get({isChatButtonEnabled:true}, (result) => {
-      if (result.isChatButtonEnabled) {
-        this.createChatButton();
-      }
-    });
+    await this.checkLicenseStatus();
+
+    this.createChatButton();
     this.createChatBox();
     this.attachEventListeners();
-    await this.loadApiKey();
-    this.updatePinnedFunctionPill(); // Set the initial pinned function display
-    this.renderTemplates(); // NEW: Render templates on init
+
+    this.loadApiKey();
+    this.updatePinnedFunctionPill();
+    this.renderTemplates();
+    
+    // Listen for license status changes
+    chrome.storage.onChanged.addListener((changes, area) => {
+        if (area === 'local' && changes.licenseValid) {
+            this.isLicensed = changes.licenseValid.newValue;
+        }
+    });
+  }
+
+  async checkLicenseStatus() {
+    const data = await chrome.storage.local.get(['licenseValid', 'lastVerificationMonth', 'lastVerificationYear']);
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    if (data.licenseValid && data.lastVerificationYear !== undefined && data.lastVerificationMonth !== undefined) {
+        // A license was previously valid. Check if it's a new month.
+        if (currentYear > data.lastVerificationYear || (currentYear === data.lastVerificationYear && currentMonth > data.lastVerificationMonth)) {
+            // It's a new month, re-verification is required.
+            this.isLicensed = false;
+            await chrome.storage.local.set({ licenseValid: false });
+        } else {
+            // Still the same month, license is valid.
+            this.isLicensed = true;
+        }
+    } else {
+        // No valid license or verification date found.
+        this.isLicensed = false;
+    }
+  }
+
+  handleLicenseActivation() {
+      const input = document.getElementById('ai-license-key-input');
+      const key = input.value.trim();
+      const statusDiv = document.getElementById('ai-license-status');
+      statusDiv.style.display = 'block';
+
+      if (!key) {
+          statusDiv.textContent = 'Please enter a key.';
+          statusDiv.className = 'license-status error';
+          return;
+      }
+
+      statusDiv.textContent = 'Activating...';
+      statusDiv.className = 'license-status loading';
+
+      chrome.runtime.sendMessage({ action: 'validateLicense', licenseKey: key }, (response) => {
+          if (response && response.valid) {
+              statusDiv.textContent = '✓ Valid! Extension activated.';
+              statusDiv.className = 'license-status success';
+              this.isLicensed = true; 
+
+              setTimeout(() => {
+                  document.getElementById('ai-license-panel').style.display = 'none';
+                  document.getElementById('ai-main-content').style.display = 'flex';
+                  this.restartChat();
+              }, 1500);
+          } else {
+              statusDiv.textContent = '✗ Invalid or inactive key. Please try again.';
+              statusDiv.className = 'license-status error';
+          }
+      });
   }
 
   createChatButton() {
-    // Prevent creating multiple buttons
     if (document.getElementById('ai-chat-button')) return;
 
     const button = document.createElement('div');
     button.id = 'ai-chat-button';
-    button.style.display = 'flex'; // Ensure it's visible when created
+    button.style.display = 'flex';
     button.innerHTML = `
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/>
@@ -98,6 +161,19 @@ class AIChatExtension {
             </div>
             <div id="ai-template-list" class="ai-template-list"></div>
         </div>
+
+        <div class="ai-license-panel" id="ai-license-panel">
+          <div class="ai-license-header">
+            <h3>Add Licence Key</h3>
+          </div>
+          <div class="ai-license-content-inner">
+            <p>Enter your license key to activate all features</p>
+            <input type="text" id="ai-license-key-input" placeholder="Enter your license key">
+            <div id="ai-license-status" class="license-status"></div>
+            <button id="ai-activate-license-btn" class="ai-btn-license">Activate</button>
+            <button id="ai-get-license-btn" class="ai-btn-license get-key">Get a Key</button>
+          </div>
+        </div>
       </div>
 
       <div class="ai-settings-panel" id="ai-settings-panel">
@@ -126,10 +202,14 @@ class AIChatExtension {
     document.getElementById('ai-function-toggle-btn').addEventListener('click', () => this.toggleFunctionTray());
     document.getElementById('ai-settings-close').addEventListener('click', () => this.toggleSettings());
 
-    // NEW: Template panel event listeners
     document.getElementById('ai-templates-btn').addEventListener('click', () => this.toggleTemplatesPanel());
     document.getElementById('ai-templates-close-btn').addEventListener('click', () => this.toggleTemplatesPanel());
 
+    // License Panel Listeners
+    document.getElementById('ai-activate-license-btn').addEventListener('click', () => this.handleLicenseActivation());
+    document.getElementById('ai-get-license-btn').addEventListener('click', () => {
+        window.open('https://www.skool.com/ai-automation-club', '_blank');
+    });
 
     document.querySelectorAll('.ai-function-btn').forEach(btn => {
       btn.addEventListener('click', (e) => this.selectFunction(e.target.dataset.function));
@@ -144,14 +224,12 @@ class AIChatExtension {
       }
     });
 
-    // NEW: Auto-hide function tray on input
     document.getElementById('ai-chat-input').addEventListener('input', () => {
         if (this.isFunctionTrayOpen) {
             this.toggleFunctionTray();
         }
     });
 
-    // NEW: Toggle function tray when clicking the pinned function pill
     document.getElementById('ai-pinned-function-container').addEventListener('click', (e) => {
         if (e.target.closest('.ai-function-btn')) {
             this.toggleFunctionTray();
@@ -175,20 +253,54 @@ class AIChatExtension {
       }
     });
 
-     // NEW: Event listener for copying JSON from templates panel
-    document.getElementById('ai-template-list').addEventListener('click', async (e) => {
+    const templateList = document.getElementById('ai-template-list');
+    templateList.addEventListener('click', async (e) => {
         const copyBtn = e.target.closest('.ai-template-copy-btn');
         if (copyBtn) {
             const jsonUrl = copyBtn.getAttribute('data-url');
             try {
-                const res = await fetch(jsonUrl);
-                const jsonText = await res.text();
+                const response = await fetch(jsonUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const jsonText = await response.text();
                 await navigator.clipboard.writeText(jsonText);
-                copyBtn.textContent = 'Copied!';
-                setTimeout(() => copyBtn.textContent = 'Copy JSON', 2000);
+                
+                copyBtn.textContent = '✅ Copied!';
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copy JSON';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
             } catch (err) {
                 copyBtn.textContent = 'Failed';
                 console.error("Failed to copy JSON:", err);
+            }
+        }
+
+        const guideBtn = e.target.closest('.ai-template-guide-btn');
+        if (guideBtn) {
+            const guideUrl = guideBtn.getAttribute('data-url');
+            if (guideUrl) {
+                window.open(guideUrl, '_blank');
+            }
+        }
+
+        const categoryHeader = e.target.closest('.ai-template-category-header');
+        if (categoryHeader) {
+            const currentCategory = categoryHeader.parentElement;
+            const isActive = currentCategory.classList.contains('active');
+
+            document.querySelectorAll('.ai-template-category.active').forEach(cat => {
+                if (cat !== currentCategory) {
+                    cat.classList.remove('active');
+                }
+            });
+
+            if (!isActive) {
+                currentCategory.classList.add('active');
+            } else {
+                currentCategory.classList.remove('active');
             }
         }
     });
@@ -207,31 +319,28 @@ class AIChatExtension {
     }
   }
 
-  // NEW: Toggle Templates Panel with Animation
   toggleTemplatesPanel() {
     this.isTemplatesPanelOpen = !this.isTemplatesPanelOpen;
     const mainContent = document.getElementById('ai-main-content');
     const templatesPanel = document.getElementById('ai-templates-panel');
 
-    // Remove all animation classes before starting a new animation
     mainContent.classList.remove('slide-in-left', 'slide-out-left');
     templatesPanel.classList.remove('slide-in-right', 'slide-out-right');
 
 
     if (this.isTemplatesPanelOpen) {
         templatesPanel.classList.remove('is-hidden');
+        document.getElementById('ai-license-panel').style.display = 'none';
         mainContent.classList.add('slide-out-left');
         templatesPanel.classList.add('slide-in-right');
 
     } else {
         mainContent.classList.add('slide-in-left');
         templatesPanel.classList.add('slide-out-right');
-         // Hide the templates panel after the animation is complete
         setTimeout(() => {
             templatesPanel.classList.add('is-hidden');
-        }, 300); // Match animation duration
+        }, 300);
     }
-    // Also close settings if open
     document.getElementById('ai-settings-panel').style.display = 'none';
   }
 
@@ -241,7 +350,6 @@ class AIChatExtension {
       if (!functionButton) return;
 
       const prettyName = functionButton.textContent;
-      // Make the pill a button so it's clearly clickable
       container.innerHTML = `<button class="ai-function-btn active">${prettyName}</button>`;
       container.style.display = 'block';
   }
@@ -258,7 +366,6 @@ class AIChatExtension {
     if (!this.isFunctionTrayOpen) {
       this.toggleFunctionTray();
     }
-    // Ensure chat content is visible after restart
     if (this.isTemplatesPanelOpen) {
         this.toggleTemplatesPanel();
     }
@@ -268,9 +375,22 @@ class AIChatExtension {
     this.isOpen = !this.isOpen;
     const chatBox = document.getElementById('ai-chat-box');
     chatBox.className = this.isOpen ? 'ai-chat-open' : 'ai-chat-closed';
-    // When closing, ensure templates panel is also hidden and chat is visible
-    if (!this.isOpen && this.isTemplatesPanelOpen) {
-        this.toggleTemplatesPanel();
+
+    if (this.isOpen) {
+        if (!this.isLicensed) {
+            // Show license panel if not licensed
+            document.getElementById('ai-main-content').style.display = 'none';
+            document.getElementById('ai-templates-panel').classList.add('is-hidden');
+            document.getElementById('ai-settings-panel').style.display = 'none';
+            document.getElementById('ai-license-panel').style.display = 'flex';
+        } else {
+            // Show main content if licensed
+            document.getElementById('ai-main-content').style.display = 'flex';
+            document.getElementById('ai-license-panel').style.display = 'none';
+        }
+    } else {
+        if (this.isTemplatesPanelOpen) this.toggleTemplatesPanel();
+        if (document.getElementById('ai-settings-panel').style.display === 'block') this.toggleSettings();
     }
   }
 
@@ -279,9 +399,11 @@ class AIChatExtension {
     const isVisible = settingsPanel.style.display === 'block';
     settingsPanel.style.display = isVisible ? 'none' : 'block';
 
-    // When opening settings, ensure templates panel is hidden
-    if (!isVisible && this.isTemplatesPanelOpen) {
-        this.toggleTemplatesPanel();
+    if (!isVisible) {
+        document.getElementById('ai-main-content').style.display = 'flex';
+        if (this.isTemplatesPanelOpen) this.toggleTemplatesPanel();
+    } else {
+        document.getElementById('ai-main-content').style.display = 'none';
     }
   }
 
@@ -538,30 +660,131 @@ class AIChatExtension {
     editor.focus();
   }
 
-  // NEW: Templates Data
-  templates = [
+  templatesData = [
     {
-      "title": "Youtube to LinkedIn Post",
-      "description": "Auto-post a LinkedIn update when a new YouTube video is published.",
-      "json_url": "https://raw.githubusercontent.com/ayushpandey-experto/aac-extesnion/refs/heads/main/19__Youtube_to_Linkedin_Post_n8n.json?token=GHSAT0AAAAAADGSQVPN6FCNBDCPP5YQYJWM2DY7NEQ"
+        category: "n8n Integration",
+        templates: [
+            {
+              "title": "Youtube to LinkedIn Post",
+              "description": "Auto-post a LinkedIn update when a new YouTube video is published.",
+              "json_url": "https://raw.githubusercontent.com/ayushpandey-experto/aac-extesnion/refs/heads/main/19__Youtube_to_ Linkedin_Post_n8n.json",
+              "guide_url": "https://www.skool.com/ai-automation-club/classroom/12d3fc65?md=4160344c83984f1fb2a82eaa7627d85c"
+            },
+            {
+              "title": "Telegram Bot Trick for Everyday Use",
+              "description": "A versatile Telegram bot for daily tasks and reminders.",
+              "json_url": "https://raw.githubusercontent.com/n8n-io/n8n-workflows/master/community/Telegram-Bot-trick-for-everyday-use.json",
+              "guide_url": "https://www.skool.com/ai-automation-club/classroom/12d3fc65?md=d80b47d4d524478593175e1ba3e4f388"
+            }
+        ]
+    },
+    {
+        category: "AI Voice Agent",
+        templates: [
+            {
+                "title": "Retell AI Outbound Call with n8n",
+                "description": "Automate outbound voice calls using Retell AI for interactive experiences.",
+                "json_url": "https://raw.githubusercontent.com/ayushpandey-experto/aac-extesnion/refs/heads/main/27__Retell_Voice_agent_outbound_n8n.json",
+                "guide_url": "https://www.skool.com/ai-automation-club/classroom/12d3fc65?md=b235af209f2946d990d98fbc707d8e6d"
+            }
+        ]
+    },
+    {
+        category: "Social Media Automation",
+        templates: [
+            {
+                "title": "YouTube Trigger in n8n",
+                "description": "Use RSS feeds to trigger workflows when a new YouTube video is posted.",
+                "json_url": "https://raw.githubusercontent.com/ayushpandey-experto/aac-extesnion/refs/heads/main/20__Youtube_RSS_feed_subscription.json",
+                "guide_url": "https://www.skool.com/ai-automation-club/classroom/12d3fc65?md=aa06728d12b44448a3e05fcbf8c96f88"
+            },
+            {
+                "title": "Video Creation Using VEO3 in n8n",
+                "description": "Automate video generation by integrating the VEO3 API with n8n.",
+                "json_url": "https://raw.githubusercontent.com/ayushpandey-experto/aac-extesnion/refs/heads/main/19__VEO3_video_creation_using_n8n%20(1).json",
+                "guide_url": "https://www.skool.com/ai-automation-club/classroom/12d3fc65?md=42e3575905f5447f883553d16d50e734"
+            },
+            {
+                "title": "n8n Instagram Posting (no third party service)",
+                "description": "Directly post images to Instagram from n8n without external services.",
+                "json_url": "https://raw.githubusercontent.com/ayushpandey-experto/aac-extesnion/refs/heads/main/17__Post_to_instagram_using_n8n.json",
+                "guide_url": "https://www.skool.com/ai-automation-club/classroom/12d3fc65?md=49f15857fbe541fdaba4d9c24b31ae40"
+            },
+            {
+                "title": "Instagram Comment Auto Reply",
+                "description": "Automatically reply to comments on your Instagram posts using n8n.",
+                "json_url": "https://raw.githubusercontent.com/ayushpandey-experto/aac-extesnion/refs/heads/main/24__n8n_insta_dm_reply.json",
+                "guide_url": "#" // Placeholder URL
+            },
+            {
+                "title": "Whatsapp through Twilio",
+                "description": "Send and receive WhatsApp messages by integrating Twilio with n8n.",
+                "json_url": "https://raw.githubusercontent.com/ayushpandey-experto/aac-extesnion/refs/heads/main/26__n8n_twillio_whatsapp.json",
+                "guide_url": "#" // Placeholder URL
+            }
+        ]
+    },
+    {
+        category: "Lead Automation",
+        templates: [
+            {
+                "title": "LinkedIn Lead Scraping Automation",
+                "description": "Extract valuable lead data from LinkedIn profiles based on URLs.",
+                "json_url": "https://raw.githubusercontent.com/ayushpandey-experto/aac-extesnion/refs/heads/main/22__Linkedin_URL_Scrape_using_n8n%20(1).json",
+                "guide_url": "https://www.skool.com/ai-automation-club/classroom/12d3fc65?md=8006e81ecc5c468ca486c7920f1d07ad"
+            },
+            {
+                "title": "LinkedIn Profile & Post Scraper Workflow",
+                "description": "Scrape detailed information from LinkedIn profiles and their posts.",
+                "json_url": "https://raw.githubusercontent.com/ayushpandey-experto/aac-extesnion/refs/heads/main/21__Linkedin_Profile_info___Post_Scrapper_using_n8n.json",
+                "guide_url": "https://www.skool.com/ai-automation-club/classroom/12d3fc65?md=a37936623c134528811e8996f3214204"
+            }
+        ]
     }
   ];
-
-  // NEW: Render Templates Function
   renderTemplates() {
     const container = document.getElementById('ai-template-list');
-    if (!container) return; // Ensure container exists
+    if (!container) return;
 
-    container.innerHTML = ''; // Clear existing templates
-    this.templates.forEach(t => {
-      const div = document.createElement('div');
-      div.className = 'ai-template-item'; // Use a class for styling
-      div.innerHTML = `
-        <strong class="template-title">${t.title}</strong>
-        <p class="template-description">${t.description}</p>
-        <button class="ai-template-copy-btn" data-url="${t.json_url}">Copy JSON</button>
-      `;
-      container.appendChild(div);
+    container.innerHTML = '';
+    this.templatesData.forEach((cat, index) => {
+        const categoryDiv = document.createElement('div');
+        categoryDiv.className = 'ai-template-category';
+
+        if (index === 0) {
+            categoryDiv.classList.add('active');
+        }
+
+        const header = document.createElement('div');
+        header.className = 'ai-template-category-header';
+        header.innerHTML = `
+            <span>${cat.category}</span>
+            <span class="arrow">›</span>
+        `;
+        categoryDiv.appendChild(header);
+
+        const templateContent = document.createElement('div');
+        templateContent.className = 'ai-template-list-inner';
+
+        if (cat.templates.length > 0) {
+            cat.templates.forEach(t => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'ai-template-item';
+                itemDiv.innerHTML = `
+                    <strong class="template-title">${t.title}</strong>
+                    <p class="template-description">${t.description}</p>
+                    <div class="ai-template-buttons-wrapper">
+                        <button class="ai-template-copy-btn" data-url="${t.json_url}">Copy JSON</button>
+                        <button class="ai-template-guide-btn" data-url="${t.guide_url}">Step by Step Guide</button>
+                    </div>
+                `;
+                templateContent.appendChild(itemDiv);
+            });
+        } else {
+            templateContent.innerHTML = '<p class="no-templates">No templates in this category yet.</p>';
+        }
+        categoryDiv.appendChild(templateContent);
+        container.appendChild(categoryDiv);
     });
   }
 }
