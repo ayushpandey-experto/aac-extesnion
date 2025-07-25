@@ -1,0 +1,6 @@
+{
+  "Title": "API Fundamentals Tutorial\n",
+  "Description": "An interactive workflow designed to teach the basics of APIs using n8n's HTTP Request and Webhook nodes, covering GET, POST, query parameters, body, headers, and error handling.",
+  "Category": "Education",
+  "Tags": "{\"api\",\"tutorial\",\"http\"}\n"
+}
