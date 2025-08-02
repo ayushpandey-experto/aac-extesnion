@@ -1,0 +1,357 @@
+{
+  "name": "Re-Engagement Followup",
+  "nodes": [
+    {
+      "parameters": {
+        "sendTo": "={{ $json[\"Email \"] }}",
+        "subject": "Reschedule Consultation #1",
+        "message": "=We missed you at the consultation yesterday. <br><br> \n\nWould you like to reschedule for the coming week?<br><br>\n\nI look forward to hearing from you!<br><br> \n\nKind regards,<br><br> \nKia \n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        740,
+        0
+      ],
+      "id": "e5772700-ea94-4bc3-b932-f4168bd592f2",
+      "name": "Gmail",
+      "webhookId": "02ba7ca8-d245-46f1-b449-efcd37f50c22",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "7Uu8XPIiFF4ac0WJ",
+          "name": "kiaghasem.dev@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        0
+      ],
+      "id": "a2825670-e3bb-48eb-bc33-6a411f4b31fa",
+      "name": "Wait",
+      "webhookId": "8297fbcb-a392-4fad-bcf0-4bad417378f0"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Google Sheets').item.json[\"Email \"] }}",
+        "subject": "Reschedule Consultation #2",
+        "message": "=We missed you at the consultation the other day. <br><br> \n\nWould you like to reschedule for the coming week?<br><br>\n\nI look forward to hearing from you!<br><br> \n\nKind regards,<br><br> \nKia \n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1140,
+        0
+      ],
+      "id": "18734f28-22fc-4e5c-b534-bb1afe40becc",
+      "name": "Gmail1",
+      "webhookId": "02ba7ca8-d245-46f1-b449-efcd37f50c22",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "7Uu8XPIiFF4ac0WJ",
+          "name": "kiaghasem.dev@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Google Sheets').item.json[\"Email \"] }}",
+        "subject": "Reschedule Consultation #3",
+        "message": "=We missed you at the consultation the other day. <br><br> \n\nWould you like to reschedule for the coming week?<br><br>\n\nI look forward to hearing from you!<br><br> \n\nKind regards,<br><br> \nKia \n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1660,
+        0
+      ],
+      "id": "6eb5aae9-b7f5-488e-b6f1-dfd70c9da8c7",
+      "name": "Gmail2",
+      "webhookId": "02ba7ca8-d245-46f1-b449-efcd37f50c22",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "7Uu8XPIiFF4ac0WJ",
+          "name": "kiaghasem.dev@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        900,
+        0
+      ],
+      "id": "a0fbd4d8-11e6-4ea9-89dd-76ca592cbf8a",
+      "name": "Wait1",
+      "webhookId": "8297fbcb-a392-4fad-bcf0-4bad417378f0"
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1320,
+        0
+      ],
+      "id": "1efc24e1-33b6-42da-b5c2-a4ff39307dc5",
+      "name": "Wait2",
+      "webhookId": "8297fbcb-a392-4fad-bcf0-4bad417378f0"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 11 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7a8e2b87-b5a0-49af-960f-400cc45d0240",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1QwBklCxp3juKyoZtmJ6iJF5K2C5kh0B89A6VaRD3WBY",
+          "mode": "list",
+          "cachedResultName": "Lead Followup",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QwBklCxp3juKyoZtmJ6iJF5K2C5kh0B89A6VaRD3WBY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Missed Call",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QwBklCxp3juKyoZtmJ6iJF5K2C5kh0B89A6VaRD3WBY/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Sequence Completed",
+              "lookupValue": "No"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        220,
+        0
+      ],
+      "id": "8036c78b-7b53-4862-8d73-6ecfe273abca",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "45bXNcqGMzyDwxsk",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1QwBklCxp3juKyoZtmJ6iJF5K2C5kh0B89A6VaRD3WBY",
+          "mode": "list",
+          "cachedResultName": "Lead Followup",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QwBklCxp3juKyoZtmJ6iJF5K2C5kh0B89A6VaRD3WBY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Missed Call",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QwBklCxp3juKyoZtmJ6iJF5K2C5kh0B89A6VaRD3WBY/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Email ": "={{ $('Google Sheets').item.json[\"Email \"] }}",
+            "Sequence Completed": "=Yes"
+          },
+          "matchingColumns": [
+            "Email "
+          ],
+          "schema": [
+            {
+              "id": "Email ",
+              "displayName": "Email ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Sequence Completed",
+              "displayName": "Sequence Completed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1880,
+        0
+      ],
+      "id": "d28fd849-2b5d-484e-ac2b-39e66e0fc5f2",
+      "name": "Google Sheets1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "45bXNcqGMzyDwxsk",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail1": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Gmail1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "Gmail2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail2": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4f20bdf3-725d-4c94-86a7-2a74e6967aeb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b28d66d14f40eb70ce76982ff5a26f67c6ff8a3b5e252b0e32973f57f9e31707"
+  },
+  "id": "vGrbfNMbDlXk9Q6d",
+  "tags": []
+}
