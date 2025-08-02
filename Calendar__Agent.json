@@ -1,0 +1,256 @@
+{
+  "name": "Calendar Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1660,
+        -40
+      ],
+      "id": "44c15ee5-a398-4e87-95d3-7f09441dc9ca",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "kiaghasem.dev@gmail.com",
+          "mode": "list",
+          "cachedResultName": "kiaghasem.dev@gmail.com"
+        },
+        "start": "={{ $fromAI(\"eventStart\") }}",
+        "end": "={{ $fromAI(\"eventEnd\") }}",
+        "additionalFields": {
+          "attendees": [
+            "={{ $fromAI(\"eventAttendeeEmail\") }}",
+            "kiaghasem.dev@gmail.com"
+          ],
+          "description": "={{ $fromAI(\"description\",\"goal of the user from the event\") }}",
+          "summary": "=Consultation: {{ $fromAI(\"name\",\"name of attendee\",string) }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        -1040,
+        340
+      ],
+      "id": "7a901591-361b-4d1e-bf7d-4a99ef12a43d",
+      "name": "Create Event with Attendee",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "qnsJich2usMqrwaR",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "kiaghasem.dev@gmail.com",
+          "mode": "list",
+          "cachedResultName": "kiaghasem.dev@gmail.com"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $fromAI(\"afterDate\") }}",
+        "timeMax": "={{ $fromAI(\"beforeDate\") }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        -1340,
+        380
+      ],
+      "id": "e7df2e87-c858-4d03-b00b-45a8d40d3498",
+      "name": "Get Events",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "qnsJich2usMqrwaR",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7ab380a2-a8d3-421c-ab4e-748ea8fb7904",
+              "name": "response",
+              "value": "Unable to perform task. Please try again.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8bc37ef8-b643-4bc7-9049-301666028eec",
+      "name": "Try Again1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -720,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "39c2f302-03be-4464-a17a-d7cc481d6d44",
+              "name": "=response",
+              "value": "={{$json.output}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9f272041-b796-46d2-91a2-de23994be4e0",
+      "name": "Success1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -720,
+        -140
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.query }}",
+        "options": {
+          "systemMessage": "=# Overview\nYou are a calendar assistant. Your responsibilities include creating and getting events in the user's calendar.\n\n**Calendar Management Tools**  \n   - Use \"Create Event with Attendee\" to book events.\n   - Use \"Get Events\" to fetch calendar availibilities when requested.\n\n\n## Checking availability \n- The user may request for you to check calendar availibility on a certain day. In this case you must get all the events on that day using the \"Get Events\" tool. \n- Then return three 30 minute slots that are available (don't have an event against them). Ideally these should be well spaced out and never after 6pm or before 6am. \n\n\n## Booking a consultation\n- If user requests for you to book a consultation, you must book an event using the \"Create Event with Attendee\" tool. \n\n## Output \n- Your output should only be the confirmation of booking or time slots or general availability. \n- Your output should not have sensetive calendar information like other event details.\n\n## Final Notes\nHere is the current date/time: {{ $now }}\nIf a duration for an event isn't specified, assume it will be 30 minutes."
+        }
+      },
+      "id": "6ee91564-e48b-4248-941e-28897e28eb75",
+      "name": "calendarAgent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        -1400,
+        -40
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "model": "o3-mini",
+        "options": {}
+      },
+      "id": "288c1cfb-78c8-4d72-a248-392c88e50381",
+      "name": "OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -1620,
+        360
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "FyKbx1SoIgWi7M7F",
+          "name": "OpenAI-Kia"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "query": "Book a 30-minute consultation for Joseph (joseph@gmail.com) for marketing automation solutions on March 20, 2025 at 4:00 PM Sydney timezone."
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "calendarAgent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Event with Attendee": {
+      "ai_tool": [
+        [
+          {
+            "node": "calendarAgent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Events": {
+      "ai_tool": [
+        [
+          {
+            "node": "calendarAgent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "calendarAgent": {
+      "main": [
+        [
+          {
+            "node": "Success1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Try Again1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "calendarAgent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "06f59b90-9aed-436e-b72b-c131c5b00c5d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b28d66d14f40eb70ce76982ff5a26f67c6ff8a3b5e252b0e32973f57f9e31707"
+  },
+  "id": "sOWWnlEgTSTOYId6",
+  "tags": [
+    {
+      "createdAt": "2025-03-12T06:21:45.425Z",
+      "updatedAt": "2025-03-12T06:21:45.425Z",
+      "id": "NNUwTiD4jDyHkm0N",
+      "name": "N8N Course"
+    }
+  ]
+}
