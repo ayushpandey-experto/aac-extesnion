@@ -1,0 +1,272 @@
+{
+  "name": "Planet Slice",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://queue.fal.run/fal-ai/veo3",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={ \"prompt\": \"{{ $json.message.content.prompt }}\" }\n",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 2000
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        640,
+        160
+      ],
+      "id": "400fa512-75cc-4bd0-ae10-890330976b23",
+      "name": "Create Video",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "UuAWfSOhHRbmJ1K2",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://queue.fal.run/fal-ai/veo3/requests/{{ $json.request_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1000,
+        160
+      ],
+      "id": "521c2316-d0fa-4bda-8fdf-42fe334e6dfa",
+      "name": "Get Video",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "UuAWfSOhHRbmJ1K2",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        820,
+        160
+      ],
+      "id": "4c1dc962-757e-49e5-a4ce-f5b7602d60cf",
+      "name": "Wait for Veo1",
+      "webhookId": "a7bf329e-b1ca-4f59-b954-d57e551210f6"
+    },
+    {
+      "parameters": {
+        "formTitle": "Planet Slice ASMR Video Generator",
+        "formDescription": "Select a planet to generate a cinematic ASMR video of it being sliced open to reveal its core.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Planet",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Mercury"
+                  },
+                  {
+                    "option": "Venus"
+                  },
+                  {
+                    "option": "Earth"
+                  },
+                  {
+                    "option": "Mars"
+                  },
+                  {
+                    "option": "Jupiter"
+                  },
+                  {
+                    "option": "Saturn"
+                  },
+                  {
+                    "option": "Uranus"
+                  },
+                  {
+                    "option": "Neptune"
+                  },
+                  {
+                    "option": "Moon"
+                  },
+                  {
+                    "option": "Sun"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        60,
+        160
+      ],
+      "id": "49cf9b7e-aab6-4ffd-b378-dc80eb287079",
+      "name": "On form submission",
+      "webhookId": "a1c8277e-5bf2-4ef4-99e4-1c7a2355aff6"
+    },
+    {
+      "parameters": {
+        "content": "# Create Veo3 Video with Fal.ai",
+        "height": 400,
+        "width": 580,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        600,
+        0
+      ],
+      "id": "87c26858-5fc3-4dd9-9cf2-0f312bfe546e",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "# Generate Prompt ",
+        "height": 400,
+        "width": 580,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "732c1d3b-ddd1-4f32-a130-1d9831db5c69",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Based on the selected planet below, generate a cinematic ASMR-style video prompt for Google's Veo 3. The scene should show a person holding the selected planet on a wooden board, slicing it open with a sharp knife. Describe the outer surface in realistic detail, and the internal layers in a scientifically inspired but imaginative way. Have the ASMR sounds of the slicing and the reveal. Do not use dialogue or screenplay format. Output a single-line JSON object like:\n{\n  \"prompt\": \"A cinematic ASMR video of a person holding the planet {{ $json['Planet'] }}...\"\n}\n\nPlanet: {{ $json['Planet'] }}"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        240,
+        160
+      ],
+      "id": "67580d54-482e-4301-99dd-3b07cb7d198a",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "zE5O89L0JjnRwfPU",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# FREE n8n Template",
+        "height": 80,
+        "width": 400,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        380,
+        -120
+      ],
+      "id": "56cc2669-32ae-4a26-a0a9-32d86957173f",
+      "name": "Sticky Note1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Create Video": {
+      "main": [
+        [
+          {
+            "node": "Wait for Veo1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Veo1": {
+      "main": [
+        [
+          {
+            "node": "Get Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Create Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "223b6707-e80e-4a33-9a7e-a894ce91a090",
+  "meta": {
+    "instanceId": "5f99b345c3a4501a22438ba5962ff6685e5e97ee4bd0a17cc04a19ed072b5c2a"
+  },
+  "id": "X2mo9NqHslqtFvT1",
+  "tags": []
+}
