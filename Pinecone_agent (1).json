@@ -1,0 +1,341 @@
+{
+  "name": "pinecone",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "0aedc50c-466e-41bc-a34d-0377bb15da6d",
+      "name": "When clicking ‘Test workflow’",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        580,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "63530695-be91-483a-81d6-e74e69d0ff08",
+      "name": "Embeddings OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1,
+      "position": [
+        940,
+        760
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "y0AJhOYgMZwDjwTx",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1psx5qQ6E4oUfWL5AWr6md4CUvhQZ2HkW",
+          "mode": "list",
+          "cachedResultName": "constitution.pdf",
+          "cachedResultUrl": "https://drive.google.com/file/d/1psx5qQ6E4oUfWL5AWr6md4CUvhQZ2HkW/view?usp=drivesdk"
+        },
+        "options": {}
+      },
+      "id": "f4837387-962a-4e2d-a670-53acc6fba621",
+      "name": "Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        760,
+        560
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "W6aSWTO5MlluV4RY",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "options": {}
+      },
+      "id": "e49c8957-4435-4f0c-85c1-9d79803ae4be",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        1060,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "3968e2d3-716a-40d8-88e8-357167155754",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        1340,
+        560
+      ],
+      "webhookId": "f36e2b6f-8623-4281-9b99-19bcc6c100c8"
+    },
+    {
+      "parameters": {},
+      "id": "bced93cc-df42-4919-89a3-85f98cce6ae4",
+      "name": "Question and Answer Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainRetrievalQa",
+      "typeVersion": 1.3,
+      "position": [
+        1560,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {}
+      },
+      "id": "082c25c5-8d61-42eb-b4f4-ecbce591b05c",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        1500,
+        760
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "y0AJhOYgMZwDjwTx",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "5b56e8a1-0a1c-4f3c-98a4-1c5c54ddacce",
+      "name": "Vector Store Retriever",
+      "type": "@n8n/n8n-nodes-langchain.retrieverVectorStore",
+      "typeVersion": 1,
+      "position": [
+        1640,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "n8nfiles",
+          "mode": "list",
+          "cachedResultName": "n8nfiles"
+        },
+        "options": {}
+      },
+      "id": "f162ce59-2aeb-4294-8fe0-d26f1a26f2cc",
+      "name": "Pinecone Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1,
+      "position": [
+        1560,
+        920
+      ],
+      "credentials": {
+        "pineconeApi": {
+          "id": "vpxKgqKegANvYNCG",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "16717c24-67ed-4bb2-a4a1-0f2755658964",
+      "name": "Embeddings OpenAI1",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1,
+      "position": [
+        1460,
+        1040
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "y0AJhOYgMZwDjwTx",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chunkSize": 3000,
+        "chunkOverlap": 200,
+        "options": {}
+      },
+      "id": "653565fc-6005-4aee-a26f-205f4b58037e",
+      "name": "Recursive Character Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        1020,
+        940
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "n8nfiles",
+          "mode": "list",
+          "cachedResultName": "n8nfiles"
+        },
+        "options": {}
+      },
+      "id": "e4d01ec5-cf32-414d-a48b-c77b3277cf26",
+      "name": "Insert into Pinecone vector store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "position": [
+        920,
+        560
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "pineconeApi": {
+          "id": "vpxKgqKegANvYNCG",
+          "name": "PineconeApi account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Insert into Pinecone vector store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Insert into Pinecone vector store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Insert into Pinecone vector store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Question and Answer Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Question and Answer Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vector Store Retriever": {
+      "ai_retriever": [
+        [
+          {
+            "node": "Question and Answer Chain",
+            "type": "ai_retriever",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Vector Store Retriever",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5ceeb7cf-0822-4256-908e-5d80cff3cbde",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ae56acec072bc16273543d89bb011ed9ab6cf3dacd823d15e41231870330f72a"
+  },
+  "id": "9FWA7GFpZxsUvQwS",
+  "tags": []
+}
