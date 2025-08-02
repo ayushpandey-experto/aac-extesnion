@@ -1,0 +1,267 @@
+{
+  "name": "Text Classifier",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {}
+      },
+      "id": "119acc09-1bb2-4d97-b005-46951d8cfe6f",
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -420,
+        420
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "TFQDvjUrgdE1DdVx",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {
+          "temperature": 0.5
+        }
+      },
+      "id": "941d0df0-7141-4b8a-9eff-ee96f130f071",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -120,
+        660
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "y0AJhOYgMZwDjwTx",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_1231009985717414765"
+        ]
+      },
+      "id": "4d81d84a-626d-4e9a-929f-ab6877060244",
+      "name": "Sponsorship",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        200,
+        200
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "TFQDvjUrgdE1DdVx",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_949591375209409702"
+        ]
+      },
+      "id": "83928f21-81dd-4f93-b956-d3a0c282f28a",
+      "name": "Collaboration",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        200,
+        360
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "TFQDvjUrgdE1DdVx",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_5151985549055901582"
+        ]
+      },
+      "id": "e86d768d-f15b-452c-8ce6-e0e58027f08b",
+      "name": "Business Inquiries",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        200,
+        520
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "TFQDvjUrgdE1DdVx",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_4360410175462073891"
+        ]
+      },
+      "id": "752f51ad-2e47-4d26-8e22-5d390d0d4740",
+      "name": "Others",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        200,
+        680
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "TFQDvjUrgdE1DdVx",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## I'm your personal email AI Labeling Agent :)\n\n### I will organize your inbox by labeling all incoming emails into predefined labels to save you time. ",
+        "height": 223.59369296517087,
+        "width": 407.40000000000003,
+        "color": 5
+      },
+      "id": "e6a75d3d-8755-46a1-8385-d4a5b87438e0",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -340,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.text }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Sponsorship",
+              "description": "Emails that offer or inquire about sponsorship deals for the YouTube channel, including potential sponsors wanting to advertise or collaborate on content."
+            },
+            {
+              "category": "Collaboration",
+              "description": "Emails from AI companies or related businesses that are interested in collaborating on projects, tutorials, or content creation for the channel."
+            },
+            {
+              "category": "Business Inquiries",
+              "description": "Emails that pertain to general business-related topics not specifically related to sponsorship or collaboration, such as inquiries about the channel, requests for information, or other miscellaneous business communications."
+            },
+            {
+              "category": "Others",
+              "description": "All others emails that do not match the description of previous labels. "
+            }
+          ]
+        },
+        "options": {
+          "systemPromptTemplate": "Please classify the text provided by the user into one of the following categories: {categories}, and use the provided formatting instructions below. Don't explain, and only output the json."
+        }
+      },
+      "id": "74910f04-5281-45f0-9b60-6e2348687b9d",
+      "name": "Labeling AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        420
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Labeling AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Labeling AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Labeling AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Sponsorship",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Collaboration",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Business Inquiries",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Others",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "353e04ab-4e22-4f4e-a0f7-b0d268e21111",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ae56acec072bc16273543d89bb011ed9ab6cf3dacd823d15e41231870330f72a"
+  },
+  "id": "MQ9L9DKAABcpZCNb",
+  "tags": []
+}
