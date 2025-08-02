@@ -1,0 +1,359 @@
+{
+  "name": "Delete Event",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "kiaghasem.dev@gmail.com",
+          "mode": "list",
+          "cachedResultName": "kiaghasem.dev@gmail.com"
+        },
+        "timeMax": "={{ $now.plus({ hours: 2}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -1860,
+        260
+      ],
+      "id": "dcb01c16-3537-4f09-901e-5f5b9ad534f9",
+      "name": "Google Calendar2",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "iWplqVmM1obkKEl2",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "17a9c01b-785e-4877-bd1d-84ca7b951b8c",
+              "leftValue": "={{ $json.organizer.email }}",
+              "rightValue": "kiaghasem.dev@gmail.com",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        -1600,
+        260
+      ],
+      "id": "f3a30d6b-614a-4f33-9a79-1f69f2fe22d3",
+      "name": "Organiser 2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all items from the incoming data\nconst items = $input.all();\nconst organizerEmail = \"kiaghasem.dev@gmail.com\";\n\n// Filter the events based on the conditions\nconst flaggedEvents = items.filter(item => {\n\tconst event = item.json;\n\n\t// Filter out the organizer from the attendees list\n\tconst guests = (event.attendees || []).filter(attendee => attendee.email !== organizerEmail);\n\t\n\t// CASE 1: Single guest - check if the lone guest's responseStatus is \"needsAction\"\n\tif (guests.length === 1) {\n\t\treturn guests[0].responseStatus === \"needsAction\";\n\t} \n\t// CASE 2: Multiple guests - flag if none have accepted\n\telse if (guests.length >= 2) {\n\t\treturn !guests.some(guest => guest.responseStatus === \"accepted\");\n\t}\n\t\n\t// Otherwise, do not flag the event\n\treturn false;\n});\n\n// Map flagged events to return only the event summary and a string of guest emails.\nconst output = flaggedEvents.map(item => {\n\tconst event = item.json;\n\t\n\t// Extract guest emails and join them with a comma and space.\n\tconst guestEmails = (event.attendees || [])\n\t\t.filter(attendee => attendee.email !== organizerEmail)\n\t\t.map(attendee => attendee.email)\n\t\t.join(\", \");\n\t\t\n\treturn {\n        eventId: event.id,\n\t\tsummary: event.summary,\n\t\tattendeeEmails: guestEmails\n\t};\n});\n\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1340,
+        260
+      ],
+      "id": "7899e04c-a3fb-4eb0-b5c8-e9caded4a54b",
+      "name": "Not Accepted2"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Not Accepted2').item.json.attendeeEmails }}",
+        "subject": "=Event Cancellation: {{ $('Not Accepted2').item.json.summary }}",
+        "message": "=Unfortunately, we've had to cancel the \"{{ $('Not Accepted2').item.json.summary }}\" event due to lack of confirmation. <br><br>\n\nIf you'd like to reschedule, please reply to this email and we'll be happy to arrange a new time. <br><br>\n\nWe look forward to connecting with you soon. <br><br>\n\nKind regards,<br>\nKamexa Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -840,
+        260
+      ],
+      "id": "d6a99e02-f7bf-40af-9364-fbc1f584198f",
+      "name": "Gmail2",
+      "webhookId": "74c8ba1c-02c3-4aa7-ba18-8bd7d2d88dc3",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "7Uu8XPIiFF4ac0WJ",
+          "name": "kiaghasem.dev@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "calendar": {
+          "__rl": true,
+          "value": "kiaghasem.dev@gmail.com",
+          "mode": "list",
+          "cachedResultName": "kiaghasem.dev@gmail.com"
+        },
+        "eventId": "={{ $json.eventId }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -1080,
+        260
+      ],
+      "id": "97d12654-fd2e-4b8b-95c5-3aaf8318fb96",
+      "name": "Google Calendar3",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "iWplqVmM1obkKEl2",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -600,
+        260
+      ],
+      "id": "7f46d06a-a189-4a9a-8ed2-dbd2673af63e",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 7-14 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2080,
+        260
+      ],
+      "id": "c4e1c389-727c-4118-a701-56b6efa6c9b1",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "emails",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -840,
+        460
+      ],
+      "id": "c85169f3-d74f-4265-982a-56538efaed3c",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Retrieve all incoming items from node A\nconst items = $input.all();\n\n// Initialize an array to collect all emails\nlet emails = [];\n\n// Loop through each event item in the input data\nfor (const item of items) {\n\tconst event = item.json;\n\t\n\t// Ensure attendeeEmails exists\n\tif (event.attendeeEmails) {\n\t\t// Split the comma separated string and remove extra spaces\n\t\tconst emailArray = event.attendeeEmails.split(',').map(email => email.trim());\n\t\t// Add these emails to the main collection\n\t\temails.push(...emailArray);\n\t}\n}\n\n// Return one single item with the \"emails\" property containing all the emails\nreturn [\n\t{\n\t\temails: emails\n\t}\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1060,
+        460
+      ],
+      "id": "9bc35514-2009-4872-948f-16180f42c023",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1QwBklCxp3juKyoZtmJ6iJF5K2C5kh0B89A6VaRD3WBY",
+          "mode": "list",
+          "cachedResultName": "Lead Followup",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QwBklCxp3juKyoZtmJ6iJF5K2C5kh0B89A6VaRD3WBY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Missed Call",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QwBklCxp3juKyoZtmJ6iJF5K2C5kh0B89A6VaRD3WBY/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Email ": "={{ $json.emails }}",
+            "Sequence Completed": "No"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Email ",
+              "displayName": "Email ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sequence Completed",
+              "displayName": "Sequence Completed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -620,
+        460
+      ],
+      "id": "52d0c96c-aa5b-41c0-acd4-ca3ea98172f3",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "45bXNcqGMzyDwxsk",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Calendar2": {
+      "main": [
+        [
+          {
+            "node": "Organiser 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Organiser 2": {
+      "main": [
+        [
+          {
+            "node": "Not Accepted2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Not Accepted2": {
+      "main": [
+        [
+          {
+            "node": "Google Calendar3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail2": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar3": {
+      "main": [
+        [
+          {
+            "node": "Gmail2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Calendar2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9bab3a17-60fb-498a-8db9-8cd2576497ee",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b28d66d14f40eb70ce76982ff5a26f67c6ff8a3b5e252b0e32973f57f9e31707"
+  },
+  "id": "mYmgjkYxIuUI3CRD",
+  "tags": []
+}
