@@ -1,0 +1,446 @@
+{
+  "name": "Lead Qualification - Real Estate",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "summarizationMethodAndPrompts": {
+            "values": {
+              "combineMapPrompt": "=Write a concise summary of the following:\n\n\n\"{{ $json.body.call.transcript }}\"\n\n\nCONCISE SUMMARY:",
+              "prompt": "=Write a concise summary of the following:\n\n\n\"{{ $json.body.call.transcript }}\"\n\n\nCONCISE SUMMARY:"
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainSummarization",
+      "typeVersion": 2,
+      "position": [
+        -1104,
+        -96
+      ],
+      "id": "1e662656-4128-40f3-a1dd-ac70c2d40d45",
+      "name": "Summarization Chain"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1008,
+        64
+      ],
+      "id": "b8fb3870-8218-465f-9ab7-d2c30398a728",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "zE5O89L0JjnRwfPU",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Update CRM  with voice AI agent call summary. \n\n",
+        "height": 88,
+        "width": 800,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1360,
+        -224
+      ],
+      "id": "6e7ba9bb-c594-4d1e-bb9c-e328737837d1",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "# Voice AI Agent calls lead on form submission\n",
+        "height": 88,
+        "width": 800,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1344,
+        -576
+      ],
+      "id": "e85d6033-e53c-4a50-9f6f-39ae35ca9d7c",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.retellai.com/v2/create-phone-call",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n\t\"from_number\": \"+15105183184\",\n\t\"to_number\": \"{{ $json['Phone Number '] }}\",\n\t\"retell_llm_dynamic_variables\": {\n\t\t\"name\": \"{{ $json['Name '] }}\",\n\t\t\"phone_number\": \"{{ $json['Phone Number '] }}\",\n\t\t\"property\": \"{{ $json.Property }}\"\n\t  },\n\t\"override_agent_id\": \"agent_a16b523063f836646da4df457d\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1008,
+        -448
+      ],
+      "id": "54b872fb-1812-4c39-b4bb-75e14641ce83",
+      "name": "Retell",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "JGdUtPEnSb6dAhxT",
+          "name": "Retell AI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formTitle": "Customer Inquiry ",
+        "formDescription": "Please provide your contact details and the AI service you're looking for. ",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Name ",
+              "placeholder": "John Doe ",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email ",
+              "fieldType": "email",
+              "placeholder": "JohnDoe@gmail.com ",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Phone Number ",
+              "fieldType": "number",
+              "placeholder": "+15102253396 ",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Property",
+              "placeholder": "123 Main Street",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "budge"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -1264,
+        -448
+      ],
+      "id": "ebbf962e-ea17-447e-8b95-bff1f24ee395",
+      "name": "On form submission",
+      "webhookId": "ca81210e-3ce0-45ef-976e-d7455a87e427"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1Kqv2U6mmxsWhBgx01nqSqX9b5grcK5RqxlLSrFYeZhg",
+          "mode": "list",
+          "cachedResultName": "Lead qualification",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Kqv2U6mmxsWhBgx01nqSqX9b5grcK5RqxlLSrFYeZhg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Kqv2U6mmxsWhBgx01nqSqX9b5grcK5RqxlLSrFYeZhg/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name ": "={{ $('On form submission').item.json['Name '] }}",
+            "Phone ": "={{ $('On form submission').item.json['Phone Number '] }}",
+            "Email ": "={{ $('On form submission').item.json['Email '] }}",
+            "Property": "={{ $json.retell_llm_dynamic_variables.property }}"
+          },
+          "matchingColumns": [
+            "Phone "
+          ],
+          "schema": [
+            {
+              "id": "Name ",
+              "displayName": "Name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email ",
+              "displayName": "Email ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone ",
+              "displayName": "Phone ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Property",
+              "displayName": "Property",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "AI Phone Summary",
+              "displayName": "AI Phone Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -768,
+        -448
+      ],
+      "id": "0ca31375-b161-4133-a122-8baca7377345",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "XNaB59lvp2qAwfit",
+          "name": "Google Sheets account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1Kqv2U6mmxsWhBgx01nqSqX9b5grcK5RqxlLSrFYeZhg",
+          "mode": "list",
+          "cachedResultName": "Lead qualification",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Kqv2U6mmxsWhBgx01nqSqX9b5grcK5RqxlLSrFYeZhg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Kqv2U6mmxsWhBgx01nqSqX9b5grcK5RqxlLSrFYeZhg/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Phone ": "=",
+            "AI Phone Summary": "={{ $json.response.text }}"
+          },
+          "matchingColumns": [
+            "AI Phone Summary"
+          ],
+          "schema": [
+            {
+              "id": "Name ",
+              "displayName": "Name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email ",
+              "displayName": "Email ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone ",
+              "displayName": "Phone ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Property",
+              "displayName": "Property",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "AI Phone Summary",
+              "displayName": "AI Phone Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -752,
+        -96
+      ],
+      "id": "2ee4a361-b3e3-4de5-a881-366aec1f6e56",
+      "name": "Append or update row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "XNaB59lvp2qAwfit",
+          "name": "Google Sheets account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Real Estate Lead Qualification Voice Agent",
+        "height": 192,
+        "width": 320,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1760,
+        -400
+      ],
+      "id": "88ced63a-0870-4d71-be6c-5a1ade0f367d",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1280,
+        -96
+      ],
+      "id": "af34895c-a41e-4aee-a332-03410e1b266e",
+      "name": "Webhook",
+      "webhookId": "dbbff561-6f5c-4a17-a02e-ebdfa0068887"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Summarization Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarization Chain": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Retell",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retell": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Summarization Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "76556a31-8386-4b09-b7f7-9536e8756d8e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5f99b345c3a4501a22438ba5962ff6685e5e97ee4bd0a17cc04a19ed072b5c2a"
+  },
+  "id": "q5OTPQqwwaugHRGd",
+  "tags": []
+}
