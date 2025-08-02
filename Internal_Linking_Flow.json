@@ -1,0 +1,414 @@
+{
+  "name": "Internal Linking Flow",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const rawTable = $input.first().json.message.content;\n\n// Split into rows and filter empty lines\nconst rows = rawTable.split('\\n').filter(row => row.trim() !== '');\n\n// Extract headers (first row)\nconst headers = rows[0]\n  .split('|')\n  .slice(1, -1)\n  .map(h => h.trim());\n\n// Process data rows (skip second separator row)\nconst jsonData = [];\nfor (let i = 2; i < rows.length; i++) {\n  const columns = rows[i]\n    .split('|')\n    .slice(1, -1)\n    .map(c => c.trim());\n  \n  jsonData.push({\n    [headers[0]]: columns[0],\n    [headers[1]]: columns[1],\n    [headers[2]]: columns[2].replace(/<br>/g, '\\n') // Convert <br> to newlines\n  });\n}\n\nreturn jsonData;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        2120
+      ],
+      "id": "f650e763-f945-4483-a12d-8162f46460d5",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "url"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -120,
+        2120
+      ],
+      "id": "a410f8f4-0df7-42a2-8dff-fc3ee6e3f558",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        840,
+        2320
+      ],
+      "id": "feaac7a9-6c77-4970-a0e1-52334bad54b5",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1a49eeef-ec4b-43ec-a9d5-50544dd05072",
+              "name": "url",
+              "value": "={{ $json[\"URL\"] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -380,
+        2320
+      ],
+      "id": "c6336f80-6f2f-4557-94ca-24ab2b0e972b",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1200,
+        2300
+      ],
+      "id": "bb446d3e-d914-4664-ada5-fd25a5ed258e",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -800,
+        2300
+      ],
+      "id": "bfb5d9ab-19d4-4c21-b878-b1e16caedb87",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        2060
+      ],
+      "id": "c3d77fea-7279-4444-93df-5e9d86ab9b96",
+      "name": "Done"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1rlNGxomRcZ2eCf69EXU3dZza9MbYopHi9xdosN15qZ4",
+          "mode": "list",
+          "cachedResultName": "DEMO-",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rlNGxomRcZ2eCf69EXU3dZza9MbYopHi9xdosN15qZ4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 812738578,
+          "mode": "list",
+          "cachedResultName": "Posted",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rlNGxomRcZ2eCf69EXU3dZza9MbYopHi9xdosN15qZ4/edit#gid=812738578"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Analysed",
+              "lookupValue": "No"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -1020,
+        2300
+      ],
+      "id": "1737b987-252e-4fc6-8a3d-205e0e2af3a3",
+      "name": "Extract URL",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "45bXNcqGMzyDwxsk",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "openai/gpt-4o-search-preview",
+          "mode": "list",
+          "cachedResultName": "OPENAI/GPT-4O-SEARCH-PREVIEW"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are part of a professional SEO team. \n\nTo add internal linking to new blog posts you are assigned with analysing all of your clients previous blog posts. \n\nFor each blog post you must scrape the blog post URL and identify the:\n- Topic: The topic of the blog post \n- Keywords: The 5 main keywords which define the concepts in the blog. \n- Summary: A detailed summary of the post in dotpoint format briefly outlining the discussed topics. \n\nOnce you have identified the above details you format it into a nice table with the following columns: \n\n1. Topic \n2. Keywords \n3. Summary \n\nYour output must only be the table and nothing else. \n\nThe client is a dental company with the following services: \n\nDentist \nTeeth whiteninsg\n\nBelow is 1 of your clients blog posts URLs. Scrape the post and analyse as per above instructions. \n\n{{ $json.url }}\n\n\nYour output must follow the table format from the below example: \n\n| Topic | Keywords | Summary |\n|------------------------------------------------------------------|------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|\n| Symptoms Indicating the Need for Wisdom Teeth Removal | wisdom teeth removal, impacted wisdom teeth, dental pain, swollen gums, jaw stiffness | - Defines wisdom teeth as third molars that emerge in late teens or early twenties.<br>- Explains common issues like impaction due to lack of space.<br>- Highlights symptoms such as persistent pain, jaw stiffness, and swollen gums.<br>- Describes pericoronitis as an infection from trapped food and bacteria.<br>- Recommends consulting a dentist if experiencing any of these signs. |\n| How to Take Care of Your Dental Implants | dental implant care, oral hygiene, peri-implantitis prevention, smoking cessation, regular dental check-ups | - Emphasizes the importance of implant maintenance to avoid peri-implantitis.<br>- Recommends using soft-bristled toothbrushes.<br>- Advises flossing with tools designed for implants.<br>- Highlights smoking as a risk to gum and implant health.<br>- Stresses the need for regular dental check-ups and cleanings. |\n| Consequences of Not Removing Impacted Wisdom Teeth | impacted wisdom teeth, swelling and infection, dental pain, teeth crowding, wisdom teeth removal | - Explains risks of impacted wisdom teeth including infection and swelling.<br>- Describes complications like cysts, tumors, and jaw pain.<br>- Details how wisdom teeth can misalign or crowd other teeth.<br>- Warns of long-term dental issues if left untreated.<br>- Urges timely removal to prevent more serious complications. |"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        100,
+        2120
+      ],
+      "id": "177c9bcc-072c-484e-a564-bba152a7e134",
+      "name": "Analyse",
+      "credentials": {
+        "openAiApi": {
+          "id": "msQo2Ld7Isb332q9",
+          "name": "OpenRouter"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1rlNGxomRcZ2eCf69EXU3dZza9MbYopHi9xdosN15qZ4",
+          "mode": "list",
+          "cachedResultName": "DEMO-",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rlNGxomRcZ2eCf69EXU3dZza9MbYopHi9xdosN15qZ4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 812738578,
+          "mode": "list",
+          "cachedResultName": "Posted",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rlNGxomRcZ2eCf69EXU3dZza9MbYopHi9xdosN15qZ4/edit#gid=812738578"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Blog Title": "={{ $json.Topic }}",
+            "Keywords": "={{ $json.Keywords }}",
+            "Summary ": "={{ $json.Summary }}",
+            "URL": "={{ $json.url }}",
+            "Analysed": "Yes"
+          },
+          "matchingColumns": [
+            "URL"
+          ],
+          "schema": [
+            {
+              "id": "Blog Title",
+              "displayName": "Blog Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Keywords",
+              "displayName": "Keywords",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Summary ",
+              "displayName": "Summary ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Analysed",
+              "displayName": "Analysed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1140,
+        2320
+      ],
+      "id": "9db017ae-a15c-48b8-b95e-5af4983898da",
+      "name": "Check Off",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "45bXNcqGMzyDwxsk",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Analyse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Check Off",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Extract URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Done",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract URL": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyse": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Off": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8bf30770-cf9c-4f19-9f92-3d068b46c097",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b28d66d14f40eb70ce76982ff5a26f67c6ff8a3b5e252b0e32973f57f9e31707"
+  },
+  "id": "q0yBkJZsemzf4z86",
+  "tags": []
+}
