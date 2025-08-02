@@ -1,0 +1,199 @@
+{
+  "name": "Calendar Automation",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "01c80ff7-5dd2-4339-9b66-d7c9662f1b4d",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.manualChatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {}
+      },
+      "id": "a66ff2c5-962b-4b86-8e0d-2a7f81d8a78a",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        560,
+        620
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "y0AJhOYgMZwDjwTx",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "=Call this tool to get the appointment availability for a particular period on the calendar. The tool may refer to availability as \"Free\" or \"Busy\". \n\nUse {timeMin} and {timeMax} to specify the window for the availability query. For example, to get availability for Septemeber 20, 2024 in California, you could set:\n\n{timeMin} to 2024-09-20 09:00 AM PT\n{timeMax} to 2024-09-20 05:00 PM PT\n\n\nIf the tool returns an empty response, it means that something went wrong. It does not mean that there is no availability.",
+        "method": "POST",
+        "url": "https://www.googleapis.com/calendar/v3/freeBusy",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"timeMin\": \"{timeMin}\",\n  \"timeMax\": \"{timeMax}\",\n  \"timeZone\": \"America/Los_Angeles\",\n  \"groupExpansionMax\": 20,\n  \"calendarExpansionMax\": 10,\n  \"items\": [\n    {\n      \"id\": \"mygptworkshop@gmail.com\"\n    }\n  ]\n}"
+      },
+      "id": "ea09161d-4b04-4569-98c7-8e5bc30a9f54",
+      "name": "Get calendar availability",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        860,
+        640
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "A9OZ1rrbHw5zydYH",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Call this tool to book an appointment in the calendar. ",
+        "method": "POST",
+        "url": "https://www.googleapis.com/calendar/v3/calendars/mygptworkshop@gmail.com/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"summary\": \"Appointment with {userName}\",\n  \"start\": {\n    \"dateTime\": \"{startTime}\",\n    \"timeZone\": \"America/Los_Angeles\"\n  },\n  \"end\": {\n    \"dateTime\": \"{endTime}\",\n    \"timeZone\": \"America/Los_Angeles\"\n  },\n  \"attendees\": [\n    {\"email\": \"mygptworkshop@gmail.com\"},\n    {\"email\": \"{userEmail}\"}\n  ]\n}",
+        "placeholderDefinitions": {
+          "values": [
+            {
+              "name": "userName",
+              "description": "The full name of the user making the appointment like John Doe"
+            },
+            {
+              "name": "startTime",
+              "description": "The start time of the event in Pacific/Standard timezone.  For example 2024-09-20T10:00:00-07:00"
+            },
+            {
+              "name": "endTime",
+              "description": "The end time of the event in Pacific/Standard timezone. It should always be 30 minutes after the startTime. "
+            }
+          ]
+        }
+      },
+      "id": "8542316b-f059-4306-be37-758e5f9065a9",
+      "name": "HTTP Request",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        980,
+        640
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "A9OZ1rrbHw5zydYH",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=You are an efficient and courteous assistant tasked with scheduling appointments with AI Workshop.\n\nWhen users mention an appointment or meeting, they are referring to a meeting with AI Workshop.\nWhen users refer to the calendar or \"your schedule,\" they are referring to AI Workshop's calendar.\n\nYou can use various tools to access and manage AI Workshop's calendar. Your primary goal is to assist users in successfully booking an appointment with AI Workshop, ensuring no scheduling conflicts. Only book an appointment if the requested time slot is available (the tool may refer to this as \"Free\").\n\nAlways respond in California, USA timezone\n\nToday's date is {{ $today.format('yyyy-MM-dd') }}\n\nAppointments are always 30 minutes in length.\n\nProvide accurate information at all times. If the tools are not functioning correctly, inform the user that you are unable to assist them at the moment.\n\n"
+        }
+      },
+      "id": "1138dcfd-9eda-4800-b90a-c5feb62abd1a",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        660,
+        400
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "580b5621-a9c6-4b96-9810-299870a93957",
+      "name": "Window Buffer Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.2,
+      "position": [
+        680,
+        620
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get calendar availability": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1afa8f14-a1f2-4940-a16a-157256655a78",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ae56acec072bc16273543d89bb011ed9ab6cf3dacd823d15e41231870330f72a"
+  },
+  "id": "cFMYufHoLmFS457m",
+  "tags": []
+}
