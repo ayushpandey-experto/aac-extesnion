@@ -1,0 +1,314 @@
+{
+  "name": "VEO 3 and n8n free template",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://queue.fal.run/fal-ai/veo3",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={ \"prompt\": \"{{ $json.message.content.prompt }}\" }\n",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 2000
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        840,
+        920
+      ],
+      "id": "417a1377-dcee-4671-8fea-adb56eee44db",
+      "name": "Create Video1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "UuAWfSOhHRbmJ1K2",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://queue.fal.run/fal-ai/veo3/requests/{{ $json.request_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        920
+      ],
+      "id": "bb7cee4d-4b3a-43e3-939c-c63174a0da5c",
+      "name": "Get Video1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "UuAWfSOhHRbmJ1K2",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1020,
+        920
+      ],
+      "id": "f8b5b315-35d0-45ce-8574-375d16827cbf",
+      "name": "Wait for Veo",
+      "webhookId": "a7bf329e-b1ca-4f59-b954-d57e551210f6"
+    },
+    {
+      "parameters": {
+        "formTitle": "Animal Selfie Viral Video Generator",
+        "formDescription": "🎥 Create a viral-style selfie video starring a talking animal",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Animal Type",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Yeti"
+                  },
+                  {
+                    "option": "Capybara"
+                  },
+                  {
+                    "option": "Golden Retriever"
+                  },
+                  {
+                    "option": "Cockatoo"
+                  },
+                  {
+                    "option": "Cat"
+                  },
+                  {
+                    "option": "Opossum"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Setting",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Snowy mountains"
+                  },
+                  {
+                    "option": "Tropical beach"
+                  },
+                  {
+                    "option": "Urban alley"
+                  },
+                  {
+                    "option": "Jungle"
+                  },
+                  {
+                    "option": "City Park"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Viral Topic",
+              "placeholder": "E.g., 'How to hold a banana like a boss', 'Why squirrels can't be trusted', etc.",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Mood",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Goofy"
+                  },
+                  {
+                    "option": "Confident"
+                  },
+                  {
+                    "option": "Melodramatic"
+                  },
+                  {
+                    "option": "Hyper"
+                  },
+                  {
+                    "option": "Deadpan"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        260,
+        920
+      ],
+      "id": "0be40051-9ddd-43d1-b537-7df90c70ad86",
+      "name": "On form submission1",
+      "webhookId": "91dee135-bc12-43eb-ad2b-b3a9d2504c05"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Create a 5-second, selfie-style parody video of an animal holding a selfie stick and talking to the camera.\nThe animal is a {{ $json['Animal Type'] }} in a {{ $json['Setting'] }} environment, talking about '{{ $json['Viral Topic'] }}' in a {{ $json['Mood'] }} tone.\n\nReturn the result as a single-line JSON object in this format:\n{\n\"prompt\": \"...\"\n}\n\nMake it funny, creative, and suitable for going viral. The visual and audio setting should reflect the mood and environment."
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        440,
+        920
+      ],
+      "id": "cbcc1359-4590-4127-8586-f6c87a795483",
+      "name": "OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "zE5O89L0JjnRwfPU",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Create Veo3 Video with Fal.ai",
+        "height": 400,
+        "width": 580,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        800,
+        760
+      ],
+      "id": "f18177a9-6f01-4637-a012-07b7b66f6838",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "# Generate Prompt ",
+        "height": 400,
+        "width": 580,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        200,
+        760
+      ],
+      "id": "ef87dc8b-a7e7-4d6d-a150-49b917e2544f",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "# FREE n8n Template",
+        "height": 80,
+        "width": 360,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        600,
+        640
+      ],
+      "id": "e0d79a8a-e3ae-4212-930a-7d972fb4b175",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Create Video1": {
+      "main": [
+        [
+          {
+            "node": "Wait for Veo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Veo": {
+      "main": [
+        [
+          {
+            "node": "Get Video1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission1": {
+      "main": [
+        [
+          {
+            "node": "OpenAI1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI1": {
+      "main": [
+        [
+          {
+            "node": "Create Video1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "987c1e28-ad2f-4f33-9c0b-6cce00b4035d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5f99b345c3a4501a22438ba5962ff6685e5e97ee4bd0a17cc04a19ed072b5c2a"
+  },
+  "id": "8hVbpgcaGnSJSmg7",
+  "tags": []
+}
