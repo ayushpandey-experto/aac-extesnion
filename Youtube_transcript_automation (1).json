@@ -1,0 +1,457 @@
+{
+  "name": "Youtube transcript automation",
+  "nodes": [
+    {
+      "parameters": {
+        "youtubeId": "https://www.youtube.com/watch?v=h02ti0Bl6zk",
+        "returnMergedText": true
+      },
+      "id": "2cbbed8b-4cae-4263-9c8d-090fa1b38bdc",
+      "name": "Youtube Transcript",
+      "type": "n8n-nodes-youtube-transcript.youtubeTranscriptNode",
+      "typeVersion": 1,
+      "position": [
+        520,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "text",
+              "renameField": true,
+              "outputFieldName": "Data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bc72dd78-8c1a-4ca9-96d5-dd34d911ad97",
+      "name": "Aggregate",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        360,
+        -60
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "7189de6e-7bfc-4ef4-9125-37f9ff70d38e",
+      "name": "When clicking ‘Test workflow’",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        260,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "case",
+        "operation": "addComment",
+        "caseId": "66",
+        "options": {}
+      },
+      "id": "10a78780-a7d4-442f-959d-367d7cf089a6",
+      "name": "Salesforce",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [
+        1460,
+        -140
+      ],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "TqqaItVyruZec4Xo",
+          "name": "Salesforce account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "dd",
+        "message": "={{ $json.message.content['Product Feature Highlights']['Feature 1'].name }},\n\n{{ $json.message.content['Product Feature Highlights']['Feature 1'].description }}",
+        "options": {}
+      },
+      "id": "a7a9d3eb-6f78-4a47-abc2-91b1e5699b33",
+      "name": "Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1600,
+        -20
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pbxu18EeuABG6TeG",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "user",
+        "user": {
+          "__rl": true,
+          "value": "ddfd",
+          "mode": "id"
+        },
+        "text": "ddfd",
+        "otherOptions": {}
+      },
+      "id": "adbb824c-87c0-4a8f-893f-3d7299372671",
+      "name": "Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        1480,
+        140
+      ],
+      "credentials": {
+        "slackApi": {
+          "id": "KkDFA8vQ71PLgoOZ",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "postAs": "organization",
+        "organization": "sdfd",
+        "text": "ss",
+        "additionalFields": {}
+      },
+      "id": "c200f83a-d267-4eb6-b178-232a8f77b04a",
+      "name": "LinkedIn",
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [
+        1800,
+        240
+      ],
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "EAYkDsE32cIoDSLB",
+          "name": "LinkedIn account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "directMessage",
+        "user": {
+          "__rl": true,
+          "value": "sss",
+          "mode": "id"
+        },
+        "text": "ss",
+        "additionalFields": {}
+      },
+      "id": "45d95c87-45aa-466f-b3f5-e5b7df57540d",
+      "name": "X",
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 2,
+      "position": [
+        1640,
+        360
+      ],
+      "credentials": {
+        "twitterOAuth2Api": {
+          "id": "mfLRSj89jB8KTCoy",
+          "name": "X account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "graphApiVersion": "v20.0",
+        "node": "ff",
+        "edge": "ss",
+        "options": {}
+      },
+      "id": "0ddd86fe-5c52-4d1d-9255-462cfcbd4f25",
+      "name": "Facebook Graph API",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        1780,
+        500
+      ],
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "GKvide158uCSNjS7",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "dd",
+        "message": "={{ $json.output.summary }}",
+        "options": {}
+      },
+      "id": "df32c2a9-eb24-439f-afbc-069867d1a9d9",
+      "name": "Gmail1",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1540,
+        620
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pbxu18EeuABG6TeG",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "user",
+        "user": {
+          "__rl": true,
+          "value": "ddfd",
+          "mode": "id"
+        },
+        "text": "ddfd",
+        "otherOptions": {}
+      },
+      "id": "1a252463-07b6-4dcd-90c8-2f43681d179a",
+      "name": "Slack1",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        1620,
+        820
+      ],
+      "credentials": {
+        "slackApi": {
+          "id": "KkDFA8vQ71PLgoOZ",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=From the text provided, extract key insights for sales enablement. I need:\n\n1. Product feature highlights.\n2. Objection-handling tips (include common objections and suggested responses).\n3. Unique selling points (USPs) or competitive advantages.\n4. Key statistics or metrics mentioned.\n\nPlease present the response in the following format:\n- **Product Feature Highlights**\n  - Feature 1: [Detailed description]\n  - Feature 2: [Detailed description]\n\n- **Objection-Handling Tips**\n  - **Objection**: [Customer concern]\n  - **Response**: [Suggested response]\n\n- **Unique Selling Points**\n  - USP 1: [Description]\n  - USP 2: [Description]\n\n- **Key Metrics**\n  - Metric 1: [Details]\n  - Metric 2: [Details]\n\nUse bold headings for each section and bullet points for individual insights to ensure a clear, structured format suitable for a sales battlecard.\n\n\ntext: {{ $json.text }}"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "id": "1a0973ed-eabd-4fde-8649-e4216ca19cbf",
+      "name": "Sales Enablement",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.5,
+      "position": [
+        1000,
+        140
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "Pns5aMzxan2GZx9u",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=From the text provided, create tailored social media posts for LinkedIn, Instagram, Twitter (X), and Facebook:\n\n- LinkedIn: A professional post highlighting the key insights with a formal tone.\n- Instagram: A short, engaging post with a call to action and relevant hashtags.\n- Twitter (X): A concise post under 280 characters with a few relevant hashtags.\n- Facebook: A conversational post with more detail and a link to the article.\n\n\ntext: {{ $json.text }}"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "id": "1623f837-9e74-4a2f-91de-e1bac7054307",
+      "name": "Social Media",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.5,
+      "position": [
+        1000,
+        340
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "Pns5aMzxan2GZx9u",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {}
+      },
+      "id": "6045658e-4ee1-4c58-a66f-5c0d1b7e6e3e",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        860,
+        700
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "Pns5aMzxan2GZx9u",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "agent": "conversationalAgent",
+        "promptType": "define",
+        "text": "=Summarize the key points and insights from the {{ $json.text }}. I need:\n\n1. A brief summary of the most important takeaways.\n2. Any significant topics or themes discussed.\n3. Noteworthy quotes, statistics, or data points.\n4. Any recommendations or action points suggested.\n\nFormat the response in a concise, easy-to-read format.\n",
+        "options": {}
+      },
+      "id": "38c3a4f8-e63e-4447-94a6-b653895e9846",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        1000,
+        520
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Youtube Transcript": {
+      "main": [
+        [
+          {
+            "node": "Sales Enablement",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Social Media",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Youtube Transcript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sales Enablement": {
+      "main": [
+        [
+          {
+            "node": "Salesforce",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Slack",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Social Media": {
+      "main": [
+        [
+          {
+            "node": "LinkedIn",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "X",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Facebook Graph API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Gmail1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Slack1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d11d4b33-dcd7-4355-bb45-48e4cb8e3091",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "15f9aabbeaa03e64b6587f73a9792ebfda6f66b02b19a83c85a4e2ea2b44f93f"
+  },
+  "id": "KQcjHBHoNZvIbmC3",
+  "tags": []
+}
