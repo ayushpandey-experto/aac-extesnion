@@ -1,0 +1,186 @@
+{
+  "name": "Reminder - Before Event",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "kiaghasem.dev@gmail.com",
+          "mode": "list",
+          "cachedResultName": "kiaghasem.dev@gmail.com"
+        },
+        "timeMax": "={{ $now.plus({ hours: 48}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -1860,
+        260
+      ],
+      "id": "173a02e3-fd2c-4908-bb09-61be64f80681",
+      "name": "Google Calendar",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "iWplqVmM1obkKEl2",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "17a9c01b-785e-4877-bd1d-84ca7b951b8c",
+              "leftValue": "={{ $json.organizer.email }}",
+              "rightValue": "kiaghasem.dev@gmail.com",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        -1640,
+        260
+      ],
+      "id": "c191f9c0-3c08-451d-a8a3-28e3a3a3f638",
+      "name": "Organiser "
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all items from the incoming data\nconst items = $input.all();\nconst organizerEmail = \"kiaghasem.dev@gmail.com\";\n\n// Filter the events based on the conditions\nconst flaggedEvents = items.filter(item => {\n\tconst event = item.json;\n\n\t// Filter out the organizer from the attendees list\n\tconst guests = (event.attendees || []).filter(attendee => attendee.email !== organizerEmail);\n\t\n\t// CASE 1: Single guest - check if the lone guest's responseStatus is \"needsAction\"\n\tif (guests.length === 1) {\n\t\treturn guests[0].responseStatus === \"needsAction\";\n\t} \n\t// CASE 2: Multiple guests - flag if none have accepted\n\telse if (guests.length >= 2) {\n\t\treturn !guests.some(guest => guest.responseStatus === \"accepted\");\n\t}\n\t\n\t// Otherwise, do not flag the event\n\treturn false;\n});\n\n// Map flagged events to return only the event summary and a string of guest emails.\nconst output = flaggedEvents.map(item => {\n\tconst event = item.json;\n\t\n\t// Extract guest emails and join them with a comma and space.\n\tconst guestEmails = (event.attendees || [])\n\t\t.filter(attendee => attendee.email !== organizerEmail)\n\t\t.map(attendee => attendee.email)\n\t\t.join(\", \");\n\t\t\n\treturn {\n\t\tsummary: event.summary,\n\t\tattendeeEmails: guestEmails\n\t};\n});\n\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1420,
+        260
+      ],
+      "id": "2657d7fd-3fb9-49fc-99a6-cda9409cadce",
+      "name": "Not Accepted"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.attendeeEmails }}",
+        "subject": "=Confirm Attendance: {{ $json.summary }} ",
+        "message": "=Please confirm your attendance to the upcoming event ({{ $json.summary }}) by accepting the Calendar invitation.<br><br>\n\nFailure to accept the invite will result in event cancellation. <br><br>\n\nThank you for your understanding and cooperation! <br><br>\n\nKind regards, <br>\nKamexa Team <br>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -1200,
+        260
+      ],
+      "id": "c58d14b3-3fd4-4116-ab23-a5de6934fd95",
+      "name": "Gmail",
+      "webhookId": "f0eb8104-6a4a-48aa-9278-694b1140f0bb",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "7Uu8XPIiFF4ac0WJ",
+          "name": "kiaghasem.dev@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 16 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2080,
+        260
+      ],
+      "id": "69b0d1eb-dc1d-4863-8b0f-6b6d7703770b",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Calendar": {
+      "main": [
+        [
+          {
+            "node": "Organiser ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Organiser ": {
+      "main": [
+        [
+          {
+            "node": "Not Accepted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Not Accepted": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail": {
+      "main": [
+        []
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Calendar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4e448304-016a-46f8-b88a-3c6c9bb8bcba",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b28d66d14f40eb70ce76982ff5a26f67c6ff8a3b5e252b0e32973f57f9e31707"
+  },
+  "id": "R6WUiXvxQLnwmqev",
+  "tags": []
+}
