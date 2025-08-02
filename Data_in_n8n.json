@@ -1,0 +1,1331 @@
+{
+  "name": "Data in n8n",
+  "nodes": [
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1GzLjbLvxzNJCtqgxSYBXJmfwgso-Pq-pEjBFJfc4-uw",
+          "mode": "list",
+          "cachedResultName": "Example Blogs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GzLjbLvxzNJCtqgxSYBXJmfwgso-Pq-pEjBFJfc4-uw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GzLjbLvxzNJCtqgxSYBXJmfwgso-Pq-pEjBFJfc4-uw/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        380,
+        1120
+      ],
+      "id": "8d015afd-6a4a-458c-b098-d56eb9180d99",
+      "name": "Grab Rows",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "o8lT7w4gDPf5ecEp",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Write a blog post about: \n\n{{ $json[\"Blog Title\"] }}\n\nYour output must be in HTML format for an email body. \n\nDon't wrap the otuput in ```html```. \n\nDon't output anything else. \n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1580,
+        1120
+      ],
+      "id": "4cbc9e33-e1d9-4759-ad9f-4ce573a98628",
+      "name": "Writes Blog",
+      "credentials": {
+        "openAiApi": {
+          "id": "lc39nieTYjYGXFGl",
+          "name": "New OpenAI Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Write a blog post about: \n\n{{ $json.fake_data_2[0].blog_title }}\n\n{{ $json.fake_data_2[1].blog_title }}\n\n{{ $('Fake Data 1').item.json.fake_data_1[0].blog_title }}\n\n{{ $('Fake Data 1').item.json.fake_data_1[1].blog_title }}\n\n{{ $('Fake Data 1').item.json?.fake_data_1[1]?.blog_title }}\n\n{{ $('Fake Data 1').item.json.fake_data_1[1].blog_title }}\n\nYour output must be in HTML format for an email body. \n\nDon't wrap the otuput in ```html```. \n\nDon't output anything else. \n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        800,
+        460
+      ],
+      "id": "6d7bcb55-1234-4397-94ca-5506547f9ed2",
+      "name": "Writes Blog1",
+      "credentials": {
+        "openAiApi": {
+          "id": "lc39nieTYjYGXFGl",
+          "name": "New OpenAI Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"fake_data_2\": [\n    {\n      \"blog_title\": \"What is AGI?\",\n      \"tone\": \"fearful\"\n    },\n    {\n      \"blog_title\": \"What is ASI?\",\n      \"tone\": \"happy\"\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        580,
+        460
+      ],
+      "id": "83fb4d42-1348-4bf6-83e3-5270a4111476",
+      "name": "Fake Data 2"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"fake_data_1\": [\n    {\n      \"blog_title\": \"Why are trees yellow?\",\n      \"tone\": \"sad\"\n    },\n    {\n      \"blog_title\": \"Why are trees green?\",\n      \"tone\": \"enthusiastic\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        340,
+        460
+      ],
+      "id": "5b939abe-5e82-4605-ba7c-abe1ebc2f58c",
+      "name": "Fake Data 1"
+    },
+    {
+      "parameters": {
+        "sendTo": "YOUR-EMAIL-HERE",
+        "subject": "Blog Post",
+        "message": "={{ $json.message.content }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1960,
+        1120
+      ],
+      "id": "53cd703f-4e94-4ef1-b1e0-59eb9184058e",
+      "name": "Gmail",
+      "webhookId": "1d03991e-18d1-4577-b169-c3d726272215",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "JJMLHQxAawgDqPs0",
+          "name": "Demo Gmail "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "YOUR-EMAIL-HERE",
+        "subject": "Blog Post",
+        "message": "={{ $json.message.content }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1180,
+        460
+      ],
+      "id": "9a2a9c21-6253-4a1d-9c9b-054d89dcec31",
+      "name": "Gmail1",
+      "webhookId": "1d03991e-18d1-4577-b169-c3d726272215",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "JJMLHQxAawgDqPs0",
+          "name": "Demo Gmail "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Write a blog post about: \n\n{{ $json.blog_title }}\n\nin a {{ $json.tone }} tone\n\nYour output must be in HTML format for an email body. \n\nDon't wrap the otuput in ```html```. \n\nDon't output anything else. \n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        440,
+        -820
+      ],
+      "id": "bd8037e1-6ede-4b93-9d60-fb289ad9fe81",
+      "name": "Writes Blog2",
+      "credentials": {
+        "openAiApi": {
+          "id": "lc39nieTYjYGXFGl",
+          "name": "New OpenAI Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "YOUR-EMAIL-HERE",
+        "subject": "Blog Post",
+        "message": "={{ $json.message.content }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        820,
+        -820
+      ],
+      "id": "dad0b366-8685-495e-b3c2-00fcb3e1dafe",
+      "name": "Gmail2",
+      "webhookId": "1d03991e-18d1-4577-b169-c3d726272215",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "JJMLHQxAawgDqPs0",
+          "name": "Demo Gmail "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"blog_title\": \"Why are trees yellow?\",\n  \"tone\": \"sad\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        -820
+      ],
+      "id": "4174b6da-230a-4468-9352-6bce19593ec5",
+      "name": "Fake Data "
+    },
+    {
+      "parameters": {
+        "content": "# Start Here"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -400,
+        -820
+      ],
+      "typeVersion": 1,
+      "id": "65115014-2dd1-439e-af77-7cf47ccee0d1",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "# Expressions"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -200,
+        440
+      ],
+      "typeVersion": 1,
+      "id": "ab7e799a-f761-4689-bbd5-91b450beb419",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "# Multiple Items"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -180,
+        1080
+      ],
+      "typeVersion": 1,
+      "id": "81cb9955-9814-416a-8187-7eb823e451b6",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1GzLjbLvxzNJCtqgxSYBXJmfwgso-Pq-pEjBFJfc4-uw",
+          "mode": "list",
+          "cachedResultName": "Example Blogs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GzLjbLvxzNJCtqgxSYBXJmfwgso-Pq-pEjBFJfc4-uw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GzLjbLvxzNJCtqgxSYBXJmfwgso-Pq-pEjBFJfc4-uw/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        380,
+        1780
+      ],
+      "id": "9049e9c3-14cb-45e7-afdc-ecb0e23461d5",
+      "name": "Grab Rows1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "o8lT7w4gDPf5ecEp",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Write a blog post about: \n\n{{ $json[\"Blog Title\"] }}\n\nYour output must be in HTML format for an email body. \n\nDon't wrap the otuput in ```html```. \n\nDon't output anything else. \n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1380,
+        1780
+      ],
+      "id": "90fdacb0-3bfd-4920-acc4-9c45b165dcb1",
+      "name": "Writes Blog3",
+      "credentials": {
+        "openAiApi": {
+          "id": "lc39nieTYjYGXFGl",
+          "name": "New OpenAI Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "YOUR-EMAIL-HERE",
+        "subject": "Blog Post",
+        "message": "={{ $json.message.content }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1760,
+        1780
+      ],
+      "id": "3c7a6fde-908c-40f7-bdee-28861cf4c2f3",
+      "name": "Gmail3",
+      "webhookId": "1d03991e-18d1-4577-b169-c3d726272215",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "JJMLHQxAawgDqPs0",
+          "name": "Demo Gmail "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Data Nodes \n- Code \n- AI Transform \n- Filter\n- Remove Duplicates \n- Limit\n- Aggregate ",
+        "height": 220
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -180,
+        1760
+      ],
+      "typeVersion": 1,
+      "id": "b1c68ddb-98d4-4f96-ad17-ec3211682a1a",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "# Data Nodes - Empty\n- Date and Time \n- Set Fields "
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -200,
+        2380
+      ],
+      "typeVersion": 1,
+      "id": "bddbc8dd-9226-445a-a53c-b1f041ebab35",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        -820
+      ],
+      "id": "1948af50-46be-4d3e-81dd-a4a4a00778d7",
+      "name": "Trigger Manually"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Write a blog post about: \n\n{{ $json.fake_data[0].blog_title }}\n\nin a {{ $json.fake_data[0].tone }} tone\n\nYour output must be in HTML format for an email body. \n\nDon't wrap the otuput in ```html```. \n\nDon't output anything else. \n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        2840,
+        2900
+      ],
+      "id": "c4c75c3b-b58d-4b14-a085-3232c829cd41",
+      "name": "Writes Blog4",
+      "credentials": {
+        "openAiApi": {
+          "id": "lc39nieTYjYGXFGl",
+          "name": "New OpenAI Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "YOUR-EMAIL-HERE",
+        "subject": "Blog Post",
+        "message": "={{ $json.message.content }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        3220,
+        2900
+      ],
+      "id": "cd1e99b7-5935-4c2c-80d0-e6fdf361f8b9",
+      "name": "Gmail4",
+      "webhookId": "1d03991e-18d1-4577-b169-c3d726272215",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "JJMLHQxAawgDqPs0",
+          "name": "Demo Gmail "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Data Nodes \n- Split \n- Sort\n- If \n- Switch \n- Execution Data",
+        "height": 200
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -200,
+        2880
+      ],
+      "typeVersion": 1,
+      "id": "c361a78c-6276-4017-9b31-1dd63d631c6c",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"fake_data_1\": [\n    {\n      \"blog_title\": \"Why are trees yellow?\",\n      \"tone\": \"sad\"\n    },\n    {\n      \"blog_title\": \"Why are trees green?\",\n      \"tone\": \"enthusiastic\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        280,
+        2900
+      ],
+      "id": "d62a6bae-297b-4345-b46c-d72ce1eecaa4",
+      "name": "Fake Data 3"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "fake_data_1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        500,
+        2900
+      ],
+      "id": "824d6b03-5440-4f9f-beca-05eb3a118599",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Write a blog post about: \n\n{{ $json.fake_data[0].blog_title }}\n\nin a {{ $json.fake_data[0].tone }} tone\n\nYour output must be in HTML format for an email body. \n\nDon't wrap the otuput in ```html```. \n\nDon't output anything else. \n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1780,
+        3400
+      ],
+      "id": "312f1969-0b3a-4823-8121-4b148b97a500",
+      "name": "Writes Blog5",
+      "credentials": {
+        "openAiApi": {
+          "id": "lc39nieTYjYGXFGl",
+          "name": "New OpenAI Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "YOUR-EMAIL-HERE",
+        "subject": "Blog Post",
+        "message": "={{ $json.message.content }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2160,
+        3400
+      ],
+      "id": "93d5ca77-6a00-476d-933c-26fae20e5e25",
+      "name": "Gmail5",
+      "webhookId": "1d03991e-18d1-4577-b169-c3d726272215",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "JJMLHQxAawgDqPs0",
+          "name": "Demo Gmail "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"fake_data_1\": [\n    {\n      \"blog_title\": \"Why are trees yellow?\",\n      \"tone\": \"sad\"\n    },\n    {\n      \"blog_title\": \"Why are trees green?\",\n      \"tone\": \"enthusiastic\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        100,
+        3400
+      ],
+      "id": "f53f1a22-89a9-4e1e-bdbc-754838f3ff1d",
+      "name": "Fake Data 4"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "fake_data_1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        320,
+        3400
+      ],
+      "id": "4006a35b-ff0a-4574-846b-f98afc71a3f9",
+      "name": "Split Out1"
+    },
+    {
+      "parameters": {
+        "content": "# Summarise\n",
+        "width": 260
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -240,
+        3400
+      ],
+      "typeVersion": 1,
+      "id": "5d70514c-b3a2-4f37-8787-fd7b9fd03497",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "aggregation": "sum",
+              "field": "number"
+            }
+          ]
+        },
+        "fieldsToSplitBy": "number, blog_title",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.summarize",
+      "typeVersion": 1.1,
+      "position": [
+        500,
+        3400
+      ],
+      "id": "ee15ed61-7de3-44ad-aee0-b27fe2aef678",
+      "name": "Summarize1"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Write a blog post about: \n\n{{ $json.fake_data[0].blog_title }}\n\nin a {{ $json.fake_data[0].tone }} tone\n\nYour output must be in HTML format for an email body. \n\nDon't wrap the otuput in ```html```. \n\nDon't output anything else. \n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        760,
+        3920
+      ],
+      "id": "3e264933-5b85-45a8-a49d-79c90d37aa04",
+      "name": "Writes Blog6",
+      "credentials": {
+        "openAiApi": {
+          "id": "lc39nieTYjYGXFGl",
+          "name": "New OpenAI Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "YOUR-EMAIL-HERE",
+        "subject": "Blog Post",
+        "message": "={{ $json.message.content }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1180,
+        3920
+      ],
+      "id": "ddb4a840-c9d7-40b1-82e7-8ded42adff16",
+      "name": "Gmail6",
+      "webhookId": "1d03991e-18d1-4577-b169-c3d726272215",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "JJMLHQxAawgDqPs0",
+          "name": "Demo Gmail "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"fake_data_1\": [\n    {\n      \"blog_title\": \"Why are trees yellow?\",\n      \"tone\": \"sad\"\n    },\n    {\n      \"blog_title\": \"Why are trees green?\",\n      \"tone\": \"enthusiastic\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        100,
+        3740
+      ],
+      "id": "3e8d5888-7e46-46cb-955a-14d3408dbfde",
+      "name": "Fake Data 5"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "fake_data_1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        320,
+        3740
+      ],
+      "id": "a0b9bdbd-d3df-43c7-9209-a99027ce7abe",
+      "name": "Split Out2"
+    },
+    {
+      "parameters": {
+        "content": "# Loop + Wait\n\n",
+        "width": 260
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -260,
+        3700
+      ],
+      "typeVersion": 1,
+      "id": "97ecc2f3-4d8c-4842-8436-154ab873ef53",
+      "name": "Sticky Note7"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        540,
+        3740
+      ],
+      "id": "5e5a8f6e-63c0-456d-b012-66204b6b90df",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1460,
+        4040
+      ],
+      "id": "3baa0d3f-4539-4a6a-ab7d-6ab03b6f8fc0",
+      "name": "Wait",
+      "webhookId": "99c887d7-b8ec-4c06-b67c-794bdc01ffcd"
+    },
+    {
+      "parameters": {
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Goal from booking a call?",
+              "placeholder": "goals",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "=Is this your correct email?  {{ $json[\"Email Address\"] }}",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Yes"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 1,
+      "position": [
+        540,
+        4440
+      ],
+      "id": "22b484c8-9fef-4562-ac0a-22331672fda0",
+      "name": "Form1",
+      "webhookId": "61fa5fc1-cd50-48a9-a648-70f156e40346"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=We've recieved a new lead and they said their goal from a consultation is this: \n\n{{ $json[\"Goal from booking a call?\"] }}\n\nAsk a clarifying question to ensure we have enough information prior to the call. \n\nJust so you know we're an AI Automation Agency that builds automations for businesses. \n\nThe clarifying question must be short and concise. \n\nDon't output anything but the clarifying question. "
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        760,
+        4440
+      ],
+      "id": "4a975b98-e225-441e-ba65-f42aa54aae86",
+      "name": "Clarifying Question",
+      "credentials": {
+        "openAiApi": {
+          "id": "lc39nieTYjYGXFGl",
+          "name": "New OpenAI Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "=Clarifying -  {{ $json.message.content }}",
+              "placeholder": "goals",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        4440
+      ],
+      "id": "fd7e09a4-62ec-45c7-8bf5-cb05cf05814e",
+      "name": "Form2",
+      "webhookId": "61fa5fc1-cd50-48a9-a648-70f156e40346"
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "showText",
+        "responseText": "Thanks for your enquiry!\nWe've confirmed that we can help you. Please book a call using the following link: \n\nhttps://calendly.com/kia-24ll/ai-consultation"
+      },
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 1,
+      "position": [
+        1320,
+        4440
+      ],
+      "id": "fac264c9-f641-4da7-b495-9804bd3a1c55",
+      "name": "Form3",
+      "webhookId": "6b3c2918-bdd2-4a8f-b9ce-9e88443e6640"
+    },
+    {
+      "parameters": {
+        "content": "# Form\n",
+        "width": 260
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -280,
+        4420
+      ],
+      "typeVersion": 1,
+      "id": "ea5fb97f-6ba5-422e-abd8-b3fc0e16a491",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"fake_data_1\": [\n    {\n      \"blog_title\": \"Why are trees yellow?\",\n      \"tone\": \"sad\"\n    },\n    {\n      \"blog_title\": \"Why are trees green?\",\n      \"tone\": \"enthusiastic\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        380,
+        5040
+      ],
+      "id": "df5de71a-0333-4edc-8439-3f307b3f6a33",
+      "name": "Fake Data 6"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "fake_data_1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        600,
+        5040
+      ],
+      "id": "70af29d4-3ffc-4441-8575-5a7eabdbeb75",
+      "name": "Split Out3"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "tUZO09OA6qvPld84",
+          "mode": "list",
+          "cachedResultName": "n8n Masterclass — Sub-Workflow Example"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "blog_title_subflow": "={{ $json.blog_title }}",
+            "tone_subflow": "={{ $json.tone }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "blog_title_subflow",
+              "displayName": "blog_title_subflow",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "tone_subflow",
+              "displayName": "tone_subflow",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        860,
+        5040
+      ],
+      "id": "5f8d7b75-3290-40b9-9b4c-afebac620366",
+      "name": "Execute Workflow"
+    },
+    {
+      "parameters": {
+        "content": "# Sub-Worfklow\n",
+        "width": 260
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -280,
+        5000
+      ],
+      "typeVersion": 1,
+      "id": "f037d07c-6c8c-4fb1-b04b-0b65ba63870e",
+      "name": "Sticky Note9"
+    },
+    {
+      "parameters": {
+        "content": "# What To Do \n\n## Experiment along with the video ",
+        "height": 580,
+        "width": 600,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1460,
+        -480
+      ],
+      "typeVersion": 1,
+      "id": "f5733d3a-ddee-426c-a44f-f51186bfe522",
+      "name": "Sticky Note10"
+    }
+  ],
+  "pinData": {
+    "Split Out1": [
+      {
+        "json": {
+          "blog_title": "Why are trees yellow?",
+          "tone": "sad",
+          "number": 5
+        }
+      },
+      {
+        "json": {
+          "blog_title": "Why are trees green?",
+          "tone": "enthusiastic",
+          "number": 12
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Grab Rows": {
+      "main": [
+        [
+          {
+            "node": "Writes Blog",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fake Data 2": {
+      "main": [
+        [
+          {
+            "node": "Writes Blog1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fake Data 1": {
+      "main": [
+        [
+          {
+            "node": "Fake Data 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Writes Blog": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Writes Blog1": {
+      "main": [
+        [
+          {
+            "node": "Gmail1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Writes Blog2": {
+      "main": [
+        [
+          {
+            "node": "Gmail2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fake Data ": {
+      "main": [
+        [
+          {
+            "node": "Writes Blog2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Grab Rows1": {
+      "main": [
+        [
+          {
+            "node": "Writes Blog3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Writes Blog3": {
+      "main": [
+        [
+          {
+            "node": "Gmail3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Manually": {
+      "main": [
+        [
+          {
+            "node": "Fake Data ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Writes Blog4": {
+      "main": [
+        [
+          {
+            "node": "Gmail4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fake Data 3": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Writes Blog4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Writes Blog5": {
+      "main": [
+        [
+          {
+            "node": "Gmail5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fake Data 4": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "Summarize1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize1": {
+      "main": [
+        [
+          {
+            "node": "Writes Blog5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Writes Blog6": {
+      "main": [
+        [
+          {
+            "node": "Gmail6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fake Data 5": {
+      "main": [
+        [
+          {
+            "node": "Split Out2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Writes Blog6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail6": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Form1": {
+      "main": [
+        [
+          {
+            "node": "Clarifying Question",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clarifying Question": {
+      "main": [
+        [
+          {
+            "node": "Form2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Form2": {
+      "main": [
+        [
+          {
+            "node": "Form3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fake Data 6": {
+      "main": [
+        [
+          {
+            "node": "Split Out3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out3": {
+      "main": [
+        [
+          {
+            "node": "Execute Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Workflow": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f6edd9fc-a9fc-45b1-b6e8-5be81678f25f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b28d66d14f40eb70ce76982ff5a26f67c6ff8a3b5e252b0e32973f57f9e31707"
+  },
+  "id": "1aFc7OPIsXe6Pzkh",
+  "tags": []
+}
