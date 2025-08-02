@@ -1,0 +1,1688 @@
+{
+  "name": "Full Inbox Manager",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 100,
+        "filters": {
+          "receivedAfter": "={{ $now.minus(30, 'minutes') }}"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -2040,
+        200
+      ],
+      "id": "7f4b2ea7-5510-4e3c-ae12-57026f7a9810",
+      "name": "New Emails",
+      "webhookId": "70e0c13e-5f70-4330-861a-03b400acafeb",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "7Uu8XPIiFF4ac0WJ",
+          "name": "kiaghasem.dev@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop through each incoming item\nfor (let item of items) {\n  const from = item.json.From;\n  if (typeof from === 'string') {\n    // If it’s in the form \"Name <email@domain.com>\", extract the part inside <>\n    const match = from.match(/<([^>]+)>/);\n    // If regex matched, use the captured email; otherwise leave it as-is\n    item.json.From = match ? match[1] : from;\n  }\n}\n\n// Return the modified items back to the workflow\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1840,
+        200
+      ],
+      "id": "cbb7f37c-ac0b-41f2-93d6-456916682be8",
+      "name": "Fix 'From'"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "77968881-2fcf-415a-944d-0968a36a7834",
+              "leftValue": "={{ $json.From }}",
+              "rightValue": "kiaghasem.dev@gmail.com",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        -1620,
+        200
+      ],
+      "id": "898c9695-3ce3-4c26-bcef-a2331e337e8c",
+      "name": "Filter Inbound"
+    },
+    {
+      "parameters": {
+        "resource": "thread",
+        "operation": "get",
+        "threadId": "={{ $json.threadId }}",
+        "simple": false,
+        "options": {
+          "returnOnlyMessages": true
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -980,
+        60
+      ],
+      "id": "03de15f4-6f9d-4cd8-84d5-683a6ca76ef7",
+      "name": "Get Full Thread",
+      "webhookId": "2929c400-1468-4c14-9d87-19e351d372c1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "7Uu8XPIiFF4ac0WJ",
+          "name": "kiaghasem.dev@gmail.com"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * n8n Function node – Group e‑mails by thread + add dateTime\n * Output structure:\n * [\n *   {\n *     threadId: '…',\n *     emails: [\n *       { dateTime:'2025‑04‑19T17:56:43+10:00', from:'rep'|'customer', message:'…' },\n *       …\n *     ]\n *   },\n *   …\n * ]\n */\n\nconst REP_ADDRESSES = [\n  'kiaghasem.dev@gmail.com'\n].map(a => a.toLowerCase());\n\n/* ---------- helpers ---------- */\nfunction decodeBody(payload) {\n  if (payload?.body?.data) return b64(payload.body.data);\n\n  if (Array.isArray(payload?.parts)) {\n    const part =\n      payload.parts.find(p => p.mimeType === 'text/plain' && p.body?.data) ??\n      payload.parts.find(p => p.mimeType === 'text/html'  && p.body?.data);\n    if (part) return b64(part.body.data);\n  }\n  return '';\n}\n\nfunction b64(str) {\n  const normalised = str.replace(/-/g, '+').replace(/_/g, '/');\n  return Buffer.from(normalised, 'base64').toString('utf8');\n}\n\nfunction whoIsSender(fromHeader) {\n  const match = fromHeader.match(/<([^>]+)>/);\n  const email = (match ? match[1] : fromHeader).trim().toLowerCase();\n  return REP_ADDRESSES.includes(email) ? 'rep' : 'customer';\n}\n\n/** Convert Gmail internalDate (ms since epoch) ➜ ISO‑8601 in Australia/Sydney */\nfunction formatDateTime(internalDate) {\n  const date = new Date(Number(internalDate));\n  return new Intl.DateTimeFormat('en-AU', {\n    timeZone: 'Australia/Sydney',\n    year:   'numeric',\n    month:  '2-digit',\n    day:    '2-digit',\n    hour:   '2-digit',\n    minute: '2-digit',\n    second: '2-digit',\n    hour12: false,\n  }).format(date)                         // \"19/04/2025, 17:56:43\"\n    .replace(',', '')                     // remove comma\n    .replace(/(\\d{2})\\/(\\d{2})\\/(\\d{4})/, '$3-$2-$1') // to YYYY‑MM‑DD\n    .replace(' ', 'T') + '+10:00';        // add ISO T separator + offset\n}\n\n/* ---------- main ---------- */\nconst rawItems = $input.all();\nconst threads = new Map();\nconst orderedThreads = [];\n\nfor (const { json } of rawItems) {\n  const threadId = json.threadId;\n  if (!threads.has(threadId)) {\n    const newThread = { threadId, emails: [] };\n    threads.set(threadId, newThread);\n    orderedThreads.push(newThread);\n  }\n\n  const emailObj = {\n    dateTime: formatDateTime(json.internalDate),\n    from:     whoIsSender(json.From ?? json.from ?? ''),\n    message:  decodeBody(json.payload),\n  };\n\n  threads.get(threadId).emails.push(emailObj);\n}\n\nreturn orderedThreads.map(t => ({ json: t }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        60
+      ],
+      "id": "dc4735fd-79bb-4f4f-8c6a-c0216f5697b2",
+      "name": "Reformat Thread"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7e33598c-17cb-497a-88f5-9cd3583211f7",
+              "name": "emailAddress",
+              "value": "={{ $json.From }}",
+              "type": "string"
+            },
+            {
+              "id": "3ee95587-c503-42bf-8625-ce60b28569d7",
+              "name": "threadIdToMatch",
+              "value": "={{ $json.threadId }}",
+              "type": "string"
+            },
+            {
+              "id": "3c21c0cc-06d4-41b0-86c2-fee9032fdc12",
+              "name": "messageId",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -880,
+        220
+      ],
+      "id": "bc340ace-679c-47e4-9054-63dab16f54c6",
+      "name": "Extract Email Address"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2260,
+        200
+      ],
+      "id": "aa68dc95-3f87-4dd9-a51d-8e6977147383",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "threadId",
+              "field2": "threadIdToMatch"
+            }
+          ]
+        },
+        "options": {
+          "multipleMatches": "all"
+        }
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        -380,
+        180
+      ],
+      "id": "840e3fe0-5109-46b4-851b-c33444216253",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=A new email has just been received. \n\nHere's the email:\n\n{{ $json.output.newProspectEmail }}\n\nHere's the summary of the email thread: \n\n{{ $json.output.previousEmails || \"No previous emails in this thread\"}}\n\nWe checked the email address in our CRM. Here's all the notes we found on the account associated with the email address: \n\n{{ $('Edit Fields').first().json.notes }}\n\nCategorise according to instructions. ",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You work at Kamexa which is an AI Automation Agency. \n\nYou're responsible for categorising inbound emails as Sales, Customer Service or Other. \n\nTo do this you must read through the thread of that email (previous emails) and classify accordingly. \n\n1. Sales: \nSales emails are those should be handled by the sales department of Kamexa. They will be related to a potential sales or revenue opportunity for Kamexa. \n\n2. Customer Service: \nThese emails are those that should be handles by the CSR team at Kamexa. They are support emails that should be handled by the admin team. \n\n3. Other: \nThese are all other emails not related to Sales or CSR. They might be finance related, promotional, spam etc. \n\n# Additional Instructions\n\n- Your output must follow the schema defined. \n- If the email is just a \"thank you\" email or does not require a reply, then classify it as 'Other'. "
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        2120,
+        160
+      ],
+      "id": "867b05fe-5091-4431-bd85-73a12e4bb01a",
+      "name": "Categorisation"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.category }}",
+                    "rightValue": "Sales",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "ac58a9f7-d5fd-43d0-81c1-97ba407e58d3"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Sales"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "3171ef88-047f-4219-bbb9-47d8df055f05",
+                    "leftValue": "={{ $json.output.category }}",
+                    "rightValue": "Customer Service",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Customer Service"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "1138c384-3766-450a-8097-13e484b0b2bc",
+                    "leftValue": "={{ $json.output.category }}",
+                    "rightValue": "Other",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Other"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        2840,
+        160
+      ],
+      "id": "e42d8865-91fd-4425-803e-7acaa275290c",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "OiexzAMhFLvrWe7w",
+          "mode": "list",
+          "cachedResultName": "Inbox Manager - Sales Agent - Quick Reply Ruby"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "threadId": "={{ $('Merge').item.json.threadId }}",
+            "messageId": "={{ $('Merge').item.json.messageId }}",
+            "emailAddress": "={{ $('Merge').item.json.emailAddress }}",
+            "notes": "={{ $('Edit Fields').item.json.notes }}",
+            "newEmail": "={{ $('Fix Email Format').item.json.output.newProspectEmail }}",
+            "contactId": "={{ $('Search Contact').item.json.contacts[0].id || null }}",
+            "threadSummary": "={{ $('Fix Email Format').item.json.output.previousEmails || \"No prior emails in thread\"}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "emailAddress",
+              "displayName": "emailAddress",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "threadId",
+              "displayName": "threadId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "messageId",
+              "displayName": "messageId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "notes",
+              "displayName": "notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "newEmail",
+              "displayName": "newEmail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "threadSummary",
+              "displayName": "threadSummary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "contactId",
+              "displayName": "contactId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        3300,
+        -540
+      ],
+      "id": "b4394d61-cb54-43ed-aed0-c92acdd2e6f4",
+      "name": "Call Sales Agent"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "17WiTiRukrvRRS61",
+          "mode": "list",
+          "cachedResultName": "Inbox Manager - CSR Agent - CSR Sarah"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "emailAddress": "={{ $('Merge').item.json.emailAddress }}",
+            "threadId": "={{ $('Merge').item.json.threadId }}",
+            "messageId": "={{ $('Merge').item.json.messageId }}",
+            "notes": "={{ $('Edit Fields').item.json.notes }}",
+            "newEmail": "={{ $('Fix Email Format').item.json.output.newProspectEmail }}",
+            "threadSummary": "={{ $('Fix Email Format').item.json.output.previousEmails }}",
+            "contactId": "={{ $('Search Contact').item.json.contacts[0].id || null }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "emailAddress",
+              "displayName": "emailAddress",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "threadId",
+              "displayName": "threadId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "messageId",
+              "displayName": "messageId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "notes",
+              "displayName": "notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "newEmail",
+              "displayName": "newEmail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "threadSummary",
+              "displayName": "threadSummary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "contactId",
+              "displayName": "contactId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        3620,
+        360
+      ],
+      "id": "5d949d1e-0b9d-4aed-a71d-6b0e2ea063ca",
+      "name": "Call CSR Agent"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an email-triage assistant. Your job is to read an incoming email (subject and body) and decide whether it is important/urgent or not. \n\nCriteria for “important” include, but are not limited to:\n- Requests or questions from executives, VIP clients, stakeholders, or regulators  \n- Deadline-driven tasks, legal matters, compliance issues, billing or payment problems  \n- System outages, security incidents, or anything impacting operations or reputation  \n- Explicit markers like “urgent,” “ASAP,” “immediately,” or “time-sensitive”  \n- Issues requiring coordination across teams or elevated visibility  \n- Any email from a current, past, future or potential customer \n\nOtherwise, it's 'Not'.\n\nPromotional emails or other companies selling us a service via email is Not important. \n\nYour output must follow the defined schema. \n\nDo not output anything else—no explanations, no extra text.\n  \n",
+        "hasOutputParser": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        3160,
+        1120
+      ],
+      "id": "d9e6cb68-73f5-4713-8271-13d266cc3a1e",
+      "name": "Importance Scoring"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.label }}",
+                    "rightValue": "Important",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "4ca65b81-0ba9-4818-9206-102af38cc525"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Important"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ff128519-0bef-4f70-833a-37bdb6f459d6",
+                    "leftValue": "={{ $json.output.label }}",
+                    "rightValue": "Not",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Not Important"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        3620,
+        1120
+      ],
+      "id": "9dcf863f-a4c4-43e4-a2fb-9372b39787f0",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR-CHAT-ID",
+        "text": "=### Important Email Alert! ###  \n\n### From -   {{ $('Merge').item.json.emailAddress }}\n\n---------------------------------------------------------  \n\n### New Email ### \n\n{{ $('Fix Email Format').item.json.output.newProspectEmail }}\n\n--------------------------------------------------------- \n\n### Thread Context ### \n\n{{ $('Fix Email Format').item.json.output.previousEmails || \"No thread\"}}\n\n--------------------------------------------------------- \n\n### CRM Notes ### \n\n{{ $('Edit Fields').item.json.notes }}\n\n\nPlease respond to them as soon as you can! ",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        4020,
+        1100
+      ],
+      "id": "4fd31c53-f631-4434-908c-38e6e1ccd444",
+      "name": "Notify",
+      "webhookId": "f6d7ed4d-cbee-4176-80b2-5b392e11592f",
+      "credentials": {
+        "telegramApi": {
+          "id": "x7l7ZX4dueaLWIAR",
+          "name": "Quick Reply Ruby"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"category\": {\n      \"type\": \"string\",\n      \"description\": \"'Sales', 'Customer Service' or 'Other'.\"\n    }\n  },\n  \"required\": [\n    \"category\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        2340,
+        380
+      ],
+      "id": "35c1e57a-a3f7-48be-a8f9-1104376bcf45",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "openai/gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "openai/gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2020,
+        400
+      ],
+      "id": "74f3c48e-6b6c-417d-8b64-7f8d407647c3",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "msQo2Ld7Isb332q9",
+          "name": "OpenRouter"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://services.leadconnectorhq.com/contacts/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer <YOUR-API-KEY>"
+            },
+            {
+              "name": "Version",
+              "value": "2021-07-28"
+            },
+            {
+              "name": "Version",
+              "value": "2021-07-28  "
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"locationId\": \"YOUR-ID-HERE\",\n  \"page\": 1,\n  \"pageLimit\": 20,\n  \"filters\": [\n    {\n      \"field\": \"email\",\n      \"operator\": \"eq\",\n      \"value\": \"{{ $json.emailAddress }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -100,
+        180
+      ],
+      "id": "b4b56805-f5a9-4aba-ae4d-16dcccdde1dd",
+      "name": "Search Contact",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "=https://services.leadconnectorhq.com/contacts/{{ $json.contacts[0].id }}/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR-API-HERE"
+            },
+            {
+              "name": "Version",
+              "value": "2021-07-28"
+            },
+            {
+              "name": "Version",
+              "value": "2021-07-28  "
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        500,
+        -80
+      ],
+      "id": "3380504f-56db-4b87-b1aa-5f92803ca82c",
+      "name": "Get All Notes"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * n8n - Function node\n * Converts the “notes” array on each item into a single Markdown string.\n * Resulting items look like:  { json: { notes: \"Note#1:\\n2025-04-26T03:56:06.568Z\\n…\\n\\nNote#2:\\n…\" } }\n */\n\nreturn items.map(item => {\n\t// Guard against missing or malformed data\n\tconst noteArray = Array.isArray(item.json.notes) ? item.json.notes : [];\n\n\t//  Build the combined note string\n\tconst combinedNotes = noteArray\n\t\t.map((note, idx) =>\n\t\t\t`Note#${idx + 1}:\\n${note.dateAdded}\\n${note.body || ''}`)\n\t\t.join('\\n\\n');          // blank line between notes\n\n\t//  Output a brand-new item that keeps only the “notes” field\n\treturn {\n\t\tjson: {\n\t\t\tnotes: combinedNotes,\n\t\t},\n\t};\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        740,
+        -80
+      ],
+      "id": "3540322a-a663-4285-bebb-0ed98d35a4d9",
+      "name": "Format Notes into Markdown"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e8e0ecc9-1e2a-4a44-bb37-d52fca6cebfb",
+              "leftValue": "={{ $json.total }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        120,
+        180
+      ],
+      "id": "592b21a0-408e-45c2-bf4d-e42c2167f5bd",
+      "name": "Existing Contact? "
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1360,
+        200
+      ],
+      "id": "31de76e1-93f5-4bd5-9f17-f4208a4a7855",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -1020,
+        -200
+      ],
+      "id": "c6fef1c0-f15c-4691-b80f-8cdabe8d943c",
+      "name": "Done"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "openai/gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "openai/gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1440,
+        380
+      ],
+      "id": "6e58805e-b76b-4651-9f78-b8126b1ac4a4",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "msQo2Ld7Isb332q9",
+          "name": "OpenRouter"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"newProspectEmail\": {\n      \"type\": \"string\",\n      \"description\": \"The body content of the new email received by the prospect which we need to answer.\"\n    },\n      \"previousEmails\": {\n      \"type\": \"string\",\n      \"description\": \"Summary of previous emails in the same thread in dotpoint format. If only one email then leave this empty.\"\n    }\n  },\n  \"required\": [\n    \"newProspectEmail\",\n    \"previousEmails\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1740,
+        360
+      ],
+      "id": "967875d9-2f2f-4015-9a0b-0569ac67221f",
+      "name": "Structured Output Parser6"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5fa8682a-b96b-4927-8f02-0b478f4ce166",
+              "name": "notes",
+              "value": "={{ $json.notes || \"New lead - no notes\" }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1040,
+        160
+      ],
+      "id": "e65ba2e2-a4d6-405e-b839-1540b283e211",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here's a new email thread in JSON String: \n\n{{ $('Merge').item.json.emails.toJsonString() }}\n",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You're an inbox manager. A new email was received in your inbox.   \n\nThe emails are given to you in JSON String formatting.   \n\nYour job is to reformat them into an easier readable format by following below steps.   \n\nYou must:   \n\n1. Identify the newest email which was just recived and extract this email.   \nThis email will be have just been received just now (exact time now = {{ $now }}). Each email has the previous email at the end of it so you must determine when it is referencing a previous email and remove that so the final output is just the new email body. Put this in the newPorspectEmail parameter of your output. This email will always be from the Customer. \n\n2. Summarise the previous emails in the thread in dotpoint format so your manager can quickly read over it for context. Put this in the previousEmails parameter.   \nSometimes the email won't have previous emails. In this case just leave the previousEmails parameter empty.\n\nKeep in mind the thread goes from oldest email at top to newest email at the bottom. \n\nYour output must follow the schema defined."
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        1540,
+        160
+      ],
+      "id": "0b17351d-673e-4f4e-a1f4-da3147553dd9",
+      "name": "Fix Email Format"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "openai/gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "openai/gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        3040,
+        1320
+      ],
+      "id": "a71e25ee-228d-4c95-8904-4862a9d999aa",
+      "name": "OpenAI Chat Model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "msQo2Ld7Isb332q9",
+          "name": "OpenRouter"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"label\": {\n      \"type\": \"string\",\n      \"description\": \"'Important' for important/urgent emails. 'Not' for all other emails.\"\n    }\n  },\n  \"required\": [\n    \"label\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        3460,
+        1300
+      ],
+      "id": "19ba7006-4b96-49cb-b0d8-63110e85b620",
+      "name": "Structured Output Parser2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://services.leadconnectorhq.com/contacts/{{ $('Search Contact').item.json.contacts[0].id }}/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR-API-HERE"
+            },
+            {
+              "name": "Version",
+              "value": "2021-07-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "userId",
+              "value": "YOUR-UID-HERE"
+            },
+            {
+              "name": "body",
+              "value": "=Type: Email\nFrom: Customer\nThreadId: {{ $('Merge').item.json.threadId }}\n\n{{ $('Fix Email Format').item.json.output.newProspectEmail }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5140,
+        860
+      ],
+      "id": "ac1a9344-fc9b-46f8-ad90-f82c2788fdbf",
+      "name": "Create Note - Input"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://services.leadconnectorhq.com/contacts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR-API-HERE"
+            },
+            {
+              "name": "Version",
+              "value": "2021-07-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"firstName\": \"{{ $json.output.name }}\",\n  \"email\": \"{{ $('Merge').item.json.emailAddress }}\",\n  \"locationId\": \"YOUR-ID-HERE\"\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5840,
+        1280
+      ],
+      "id": "dec80efc-20b6-43c4-a815-62582727e137",
+      "name": "Create Contact"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"name\": {\n      \"type\": \"string\",\n      \"description\": \"name of the person\"\n    }\n  },\n  \"required\": [\n    \"name\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        5680,
+        1480
+      ],
+      "id": "6f51f37a-5795-462a-b5d9-b7f9262436e1",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here's the email: \n\n{{ $('Fix Email Format').item.json.output.newProspectEmail }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=Your job is to read an email and identify the name of the sender. \n\nThey usually put this at the bottom of their email.\n\nYour output must follow the defined schema."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        5420,
+        1280
+      ],
+      "id": "8d85f295-22ce-4670-bb3a-313d407af544",
+      "name": "Name Finder"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://services.leadconnectorhq.com/contacts/{{ $json.contact.id }}/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR-API-HERE"
+            },
+            {
+              "name": "Version",
+              "value": "2021-07-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "userId",
+              "value": "YOUR-UID-HERE"
+            },
+            {
+              "name": "body",
+              "value": "=Type: Email\nFrom: Customer\nThreadId: {{ $('Merge').item.json.threadId }}\n\n{{ $('Fix Email Format').item.json.output.newProspectEmail }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        6140,
+        1280
+      ],
+      "id": "baddc86f-126c-4c90-a2ec-a505e9f71385",
+      "name": "Create Note - Input1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "openai/gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "openai/gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        5300,
+        1480
+      ],
+      "id": "33670c24-74fd-4d5b-bafb-fe07681b4992",
+      "name": "OpenAI Chat Model3",
+      "credentials": {
+        "openAiApi": {
+          "id": "msQo2Ld7Isb332q9",
+          "name": "OpenRouter"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3aa4ee05-7c16-4513-928d-61dae542a4c3",
+              "leftValue": "={{ $('Search Contact').item.json.contacts[0].id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4700,
+        1100
+      ],
+      "id": "88407455-fad2-4a88-80c4-bacffe21a0b3",
+      "name": "In CRM?"
+    },
+    {
+      "parameters": {
+        "content": "# Get New Emails",
+        "height": 1000,
+        "width": 2100,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2320,
+        -280
+      ],
+      "typeVersion": 1,
+      "id": "d903fe55-c340-4e5c-a859-99896bdd8f53",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "# Check CRM - Context ",
+        "height": 1000,
+        "width": 1420
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -200,
+        -280
+      ],
+      "typeVersion": 1,
+      "id": "4bfffcc6-d4da-4ec0-86ae-4babc56e5f45",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "# Categorisation ",
+        "height": 1000,
+        "width": 1420,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1240,
+        -280
+      ],
+      "typeVersion": 1,
+      "id": "2c4c4afd-3a83-481a-8cae-232c2c8f685c",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "# Quick Reply Ruby ",
+        "height": 400,
+        "width": 500,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3040,
+        -660
+      ],
+      "typeVersion": 1,
+      "id": "bc7e53c1-3d20-4313-a6bc-178409705e6d",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "# Quick Support Sally",
+        "height": 400,
+        "width": 500,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3420,
+        260
+      ],
+      "typeVersion": 1,
+      "id": "2e7a4345-e4c1-4c24-b123-e572d7d86760",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "# Other - Notification",
+        "height": 760,
+        "width": 1580,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2820,
+        880
+      ],
+      "typeVersion": 1,
+      "id": "c8eac7a4-f2b5-41ce-b22c-823747dff93a",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "# Full Context",
+        "height": 1000,
+        "width": 1840,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        4580,
+        720
+      ],
+      "typeVersion": 1,
+      "id": "730eabf0-4c78-41ca-bedc-09a6b4c670c6",
+      "name": "Sticky Note6"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "New Emails": {
+      "main": [
+        [
+          {
+            "node": "Fix 'From'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fix 'From'": {
+      "main": [
+        [
+          {
+            "node": "Filter Inbound",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Inbound": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Full Thread": {
+      "main": [
+        [
+          {
+            "node": "Reformat Thread",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reformat Thread": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Email Address": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "New Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Search Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Categorisation": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Call Sales Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call CSR Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Importance Scoring",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call CSR Agent": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Sales Agent": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Importance Scoring": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "Notify",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify": {
+      "main": [
+        [
+          {
+            "node": "In CRM?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Categorisation",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Categorisation",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Contact": {
+      "main": [
+        [
+          {
+            "node": "Existing Contact? ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Notes": {
+      "main": [
+        [
+          {
+            "node": "Format Notes into Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Notes into Markdown": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Existing Contact? ": {
+      "main": [
+        [
+          {
+            "node": "Get All Notes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Done",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Full Thread",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extract Email Address",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Fix Email Format",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser6": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Fix Email Format",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Fix Email Format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fix Email Format": {
+      "main": [
+        [
+          {
+            "node": "Categorisation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Importance Scoring",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Importance Scoring",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Contact": {
+      "main": [
+        [
+          {
+            "node": "Create Note - Input1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Name Finder",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Name Finder": {
+      "main": [
+        [
+          {
+            "node": "Create Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Name Finder",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Note - Input": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Note - Input1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "In CRM?": {
+      "main": [
+        [
+          {
+            "node": "Create Note - Input",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Name Finder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7e6b6634-258b-43bb-b02d-298262d2ba7c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b28d66d14f40eb70ce76982ff5a26f67c6ff8a3b5e252b0e32973f57f9e31707"
+  },
+  "id": "LG8AlZWnbR8qoUrS",
+  "tags": []
+}
