@@ -1,0 +1,117 @@
+{
+  "name": "Sub-Workflow Example",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "blog_title_subflow"
+            },
+            {
+              "name": "tone_subflow"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "3e6ea6f8-9d21-496a-a3be-c7fe6a61d985",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Write a blog post about: \n\n{{ $json.fake_data[0].blog_title }}\n\nin a {{ $json.fake_data[0].tone }} tone\n\nYour output must be in HTML format for an email body. \n\nDon't wrap the otuput in ```html```. \n\nDon't output anything else. \n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        220,
+        0
+      ],
+      "id": "6f4c77f8-cd12-480a-9baa-d51f1b07fe30",
+      "name": "Writes Blog7",
+      "credentials": {
+        "openAiApi": {
+          "id": "lc39nieTYjYGXFGl",
+          "name": "New OpenAI Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "YOUR-EMAIL-HERE",
+        "subject": "Blog Post",
+        "message": "={{ $json.message.content }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        600,
+        0
+      ],
+      "id": "b5449dd5-c687-4450-94e6-f8c4ac280048",
+      "name": "Gmail7",
+      "webhookId": "1d03991e-18d1-4577-b169-c3d726272215",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "JJMLHQxAawgDqPs0",
+          "name": "Demo Gmail "
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Writes Blog7": {
+      "main": [
+        [
+          {
+            "node": "Gmail7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Writes Blog7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "606fa645-851f-4258-a55a-894f39149f1b",
+  "meta": {
+    "instanceId": "b28d66d14f40eb70ce76982ff5a26f67c6ff8a3b5e252b0e32973f57f9e31707"
+  },
+  "id": "tUZO09OA6qvPld84",
+  "tags": []
+}
