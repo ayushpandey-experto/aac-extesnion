@@ -1,0 +1,362 @@
+{
+  "name": "Upload New File to Supabase",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e556566e-20a1-48b4-b01e-197a402b5a5f",
+              "name": "id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a892a9a8-5539-4899-b5cb-27e619f832a6",
+      "name": "Set ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        420,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "id": "5742208a-99a3-4884-8dea-9d7c07086373",
+      "name": "Supabase Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [
+        1160,
+        400
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "u6uADUP7kCk9Ophz",
+          "name": "DEMO"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "=file_id",
+                "value": "={{ $('Set ID').item.json.id }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "bd15a828-bb46-42d8-9149-4ab3c9834e55",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        1300,
+        620
+      ]
+    },
+    {
+      "parameters": {
+        "chunkSize": 300,
+        "chunkOverlap": 50,
+        "options": {}
+      },
+      "id": "963898a3-5a0f-4f93-99e1-8e4f551d2b4f",
+      "name": "Recursive Character Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        1400,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "e12eaf4a-3b39-4e0d-9547-b6889f0827c9",
+      "name": "Embeddings OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        620
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "j48Yn0M4KeSBdU1F",
+          "name": "OpenAI - Kia "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {}
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1kB1PdiQ9hSXyilabG-06aVus4NXXRbmM",
+          "mode": "list",
+          "cachedResultName": "Kamexa Policies - DEMO",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1kB1PdiQ9hSXyilabG-06aVus4NXXRbmM"
+        },
+        "event": "fileCreated",
+        "options": {
+          "fileType": "all"
+        }
+      },
+      "id": "f51e56af-bbd9-46cc-8ba1-3eeb6dc64c34",
+      "name": "New File",
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        120,
+        400
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "zEyLkbCslh3X0OCz",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "text/plain"
+            }
+          }
+        }
+      },
+      "id": "64f9bef3-75c0-4e85-a3d9-38660b465f05",
+      "name": "Download File",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        660,
+        400
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "zEyLkbCslh3X0OCz",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Upload New File into Knowledge Base\n\n",
+        "height": 80,
+        "width": 820,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        60,
+        180
+      ],
+      "typeVersion": 1,
+      "id": "233719e7-e641-4cc3-b2fa-058c57235ca0",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        840,
+        400
+      ],
+      "id": "c84f22af-ac52-4f45-8584-e6fba8c4784e",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "content": "## Get New File \n",
+        "height": 260,
+        "width": 280,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        60,
+        320
+      ],
+      "typeVersion": 1,
+      "id": "70c67a70-3779-4093-8099-9273ef51a067",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Fix Formatting\n",
+        "height": 260,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        360,
+        320
+      ],
+      "typeVersion": 1,
+      "id": "116342be-463f-465c-81f9-01e795d8d923",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "## Extract File Text\n\n",
+        "height": 260,
+        "width": 420,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        620,
+        320
+      ],
+      "typeVersion": 1,
+      "id": "551cb94e-5ed4-47c1-86c7-7ebc94675d5d",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "## Update Vector Database\n\n",
+        "height": 580,
+        "width": 560,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1060,
+        320
+      ],
+      "typeVersion": 1,
+      "id": "080deaa9-ac05-4601-b54c-1f60aa7112f9",
+      "name": "Sticky Note6"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Set ID": {
+      "main": [
+        [
+          {
+            "node": "Download File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New File": {
+      "main": [
+        [
+          {
+            "node": "Set ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download File": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5ecca044-1f00-44e6-a562-9750ec196186",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "18d8b08cb4815059d1828b7433fb6474c11a74ed8979856996e39dd2f666d3bc"
+  },
+  "id": "cXU2xvbygNEPvJrN",
+  "tags": []
+}
