@@ -1,0 +1,857 @@
+{
+  "name": "AI Nodes",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        180
+      ],
+      "id": "3e17acc3-457f-421d-b6b3-906e68286210",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Recommend 10 names for a community that teaches AI Automation. \n\nLike AI Automation Accelerator.\n\n"
+            }
+          ]
+        },
+        "simplify": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        120,
+        520
+      ],
+      "id": "5aced815-1412-4f34-aad0-a20149d2c652",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "lc39nieTYjYGXFGl",
+          "name": "New OpenAI Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "prompt": "Generate an image of a man running towards his dog with both of them very happy.\n\nMake it realistic. ",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        160,
+        920
+      ],
+      "id": "e0d771cf-30a6-42c6-9075-fea547a77716",
+      "name": "Image",
+      "credentials": {
+        "openAiApi": {
+          "id": "lc39nieTYjYGXFGl",
+          "name": "New OpenAI Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "inputType": "base64",
+        "options": {
+          "detail": "auto"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        380,
+        920
+      ],
+      "id": "ca046a02-bbca-4cb6-893f-dc0193761908",
+      "name": "Analyse Image",
+      "credentials": {
+        "openAiApi": {
+          "id": "lc39nieTYjYGXFGl",
+          "name": "New OpenAI Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Text Node"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -300,
+        520
+      ],
+      "id": "b8e3c4cc-10f3-4d2d-b9fe-6ddfc7625732",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "# Image Node\n"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -300,
+        900
+      ],
+      "id": "9c7859c9-ba58-40ce-ad78-a7bab8729132",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "input": "We're at a pivotal moment in history. Mass AI Adoption by businesses is right around the corner.",
+        "options": {
+          "response_format": "mp3",
+          "speed": 1,
+          "binaryPropertyOutput": "data"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        180,
+        1400
+      ],
+      "id": "cd1c22c9-8a2d-4975-800c-276e6012ec5a",
+      "name": "Generate Audio",
+      "credentials": {
+        "openAiApi": {
+          "id": "lc39nieTYjYGXFGl",
+          "name": "New OpenAI Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        400,
+        1200
+      ],
+      "id": "d8955269-d957-41d0-9159-f58b4ab9843b",
+      "name": "Transcribe Recording",
+      "credentials": {
+        "openAiApi": {
+          "id": "lc39nieTYjYGXFGl",
+          "name": "New OpenAI Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "translate",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        420,
+        1460
+      ],
+      "id": "4b215549-158d-4c18-a34e-060c9aecb80a",
+      "name": "Translate Recording",
+      "credentials": {
+        "openAiApi": {
+          "id": "lc39nieTYjYGXFGl",
+          "name": "New OpenAI Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Voice Node\n"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -280,
+        1400
+      ],
+      "id": "3fbd60a3-4371-43af-8f17-c049d5da50ae",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"data\":\n  [\n    {\n      \"city\": \"Lisbon, Portugal is a picturesque city of sunshine, trams, and soulful Fado music. Its charm lies in the mix of historic neighborhoods and easy access to beautiful beaches. But while the weather is great, the city's steep hills can be tough to navigate, especially on foot\"\n    },\n    {\n      \"city\": \"Tokyo, Japan dazzles with its futuristic skyline, unmatched public transport, and deep cultural traditions. It's clean, efficient, and endlessly fascinating. However, the high cost of living and intense work culture can make it overwhelming, especially for newcomers\"\n    },\n    {\n      \"city\": \"Buenos Aires, Argentina pulses with life through its tango, street art, and rich literary history. It’s a city full of passion and culture, where every neighborhood feels like a world of its own. But economic instability and inflation frequently impact daily life for residents\"\n    },\n    {\n      \"city\": \"Vancouver, Canada offers breathtaking nature, with mountains and ocean surrounding a modern, diverse city. Its outdoor lifestyle is second to none. The downside? Vancouver's housing market is one of the least affordable in the world, pricing out many locals\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        1900
+      ],
+      "id": "89baed08-a1e9-4ee8-98f0-93f8cfff4edc",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        220,
+        1900
+      ],
+      "id": "13d5fce7-718a-41bf-a52f-cd126aa16b27",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.city }}",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "city",
+              "description": "Which city are they talking about?",
+              "required": true
+            },
+            {
+              "name": "benefit",
+              "description": "What benefit did they mention about the city?",
+              "required": true
+            },
+            {
+              "name": "limitation",
+              "description": "What limitation did they mention about the city?",
+              "required": true
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batchSize": 3
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        1900
+      ],
+      "id": "af24d568-93bb-4c3b-89dc-f17575183662",
+      "name": "Information Extractor"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        540,
+        2120
+      ],
+      "id": "b21d3c54-31f9-4dbc-9047-6f39f005c2da",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "lc39nieTYjYGXFGl",
+          "name": "New OpenAI Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Information Extractor\n"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -340,
+        1900
+      ],
+      "id": "915cccd2-aadc-4d6b-a3a4-660efca3acaf",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Give me the list of all cities mentioned below with their pros and cons as mentioned below.\n\n{{ $json.data }}",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        280,
+        2380
+      ],
+      "id": "d1281f6b-4a5b-467f-bb8d-80be80893e23",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"data\": \"Lisbon, Portugal is a picturesque city of sunshine, trams, and soulful Fado music. Its charm lies in the mix of historic neighborhoods and easy access to beautiful beaches. But while the weather is great, the city's steep hills can be tough to navigate, especially on foot. Tokyo, Japan dazzles with its futuristic skyline, unmatched public transport, and deep cultural traditions. It's clean, efficient, and endlessly fascinating. However, the high cost of living and intense work culture can make it overwhelming, especially for newcomers. Buenos Aires, Argentina pulses with life through its tango, street art, and rich literary history. It’s a city full of passion and culture, where every neighborhood feels like a world of its own. But economic instability and inflation frequently impact daily life for residents. Vancouver, Canada offers breathtaking nature, with mountains and ocean surrounding a modern, diverse city. Its outdoor lifestyle is second to none. The downside? Vancouver's housing market is one of the least affordable in the world, pricing out many locals.\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        20,
+        2380
+      ],
+      "id": "a65d5d9b-bd93-4644-aef7-530fdf2b9955",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        280,
+        2580
+      ],
+      "id": "c4533925-7110-4eb3-bcc4-b3a033a10551",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "lc39nieTYjYGXFGl",
+          "name": "New OpenAI Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"ctiy\": {\n      \"type\": \"string\",\n      \"description\": \"name of city.\"\n    },\n    \"pro\": {\n      \"type\": \"string\",\n      \"description\": \"good thing about city.\"\n    }\n  },\n  \"required\": [\n    \"city\",\n    \"pro\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        540,
+        2560
+      ],
+      "id": "c3b54760-2f95-4b07-a417-7b2653393357",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"FIELD_NAME_1\": {\n      \"type\": \"string\",\n      \"description\": \"description.\"\n    },\n    \"FIELD_NAME_2\": {\n      \"type\": \"string\",\n      \"description\": \"description.\"\n    }\n  },\n  \"required\": [\n    \"FIELD_NAME_1\",\n    \"FIELD_NAME_2\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1020,
+        2580
+      ],
+      "id": "9a39d0fc-3498-48c3-9e95-9839c46d7c11",
+      "name": "Using JSON"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"city\": \"California\",\n\t\"pros\": [\"great weather\", \"good people\"],\n\t\"cons\": [\"bad coffee\"]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        880,
+        2580
+      ],
+      "id": "181dfa69-315a-46a7-b75d-32ecaf19337d",
+      "name": "Using Example"
+    },
+    {
+      "parameters": {
+        "content": "# Basic LLM Chain\n"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        2360
+      ],
+      "id": "064f8622-3748-4a8a-8ad4-eda7a04bdfa3",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.text_to_sentiment_analyse }}",
+        "options": {
+          "systemPromptTemplate": "You are highly intelligent and accurate sentiment analyzer. Analyze the sentiment of the provided text. Categorize it into one of the following: {categories}. Use the provided formatting instructions. Only output the JSON."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.sentimentAnalysis",
+      "typeVersion": 1.1,
+      "position": [
+        200,
+        2960
+      ],
+      "id": "7ac81a4d-8d5e-4ccc-9a23-519c3ec24a4f",
+      "name": "Sentiment Analysis",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        160,
+        3160
+      ],
+      "id": "2a5ea558-8224-4273-8be6-b01a1141be07",
+      "name": "OpenAI Chat Model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "lc39nieTYjYGXFGl",
+          "name": "New OpenAI Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e6c3dcfc-20bf-4fbc-a18c-ad639bb4e8c2",
+              "name": "text_to_sentiment_analyse",
+              "value": "=The morning started off with grey skies and a series of small, annoying problems—spilled coffee, a dead phone battery, and an email full of bad news. Nothing catastrophic, but enough to put a sour taste in the day. Even people’s voices seemed louder and more irritating than usual. Some days just feel heavier than others, and this one felt like it was dragging its feet from the start.\n\n\n\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        2960
+      ],
+      "id": "b4763e0c-c9d7-4fd1-90b7-fe6ef31abb1c",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "content": "# Sentiment Analysis\n\n"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        2900
+      ],
+      "id": "919a048c-3741-456e-bd4c-8c3eafe8750d",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "chunkSize": 500,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainSummarization",
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        3480
+      ],
+      "id": "b6c98e11-ff4f-472f-8c81-8b9b030bf255",
+      "name": "Summarization Chain"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cbd1a372-bf90-4bb5-9a74-614ea724b8a3",
+              "name": "random",
+              "value": "=Artificial General Intelligence (AGI) refers to a type of artificial intelligence that possesses the ability to understand, learn, and apply knowledge across a wide range of tasks at a level equal to—or beyond—that of a human being. Unlike narrow AI, which is designed to perform specific tasks like image recognition or language translation, AGI would have the capacity for general reasoning, problem-solving, and even emotional and social intelligence across diverse contexts without needing to be retrained. The idea of AGI has long fascinated researchers, philosophers, and futurists, largely because it represents a turning point in both technology and humanity's relationship with it. Theoretically, an AGI system could write poetry, conduct scientific research, plan a business strategy, cook a gourmet meal, and carry on a deep philosophical conversation—all with the same underlying architecture. The implications of such a breakthrough are profound: AGI could drastically accelerate scientific discovery, automate nearly every industry, and help solve global problems like climate change, disease, and poverty. At the same time, the development of AGI raises serious ethical and existential questions. How do we ensure it aligns with human values? What if it develops goals that conflict with ours? Will it create widespread unemployment or exacerbate inequality? These questions are not just science fiction; leading thinkers and institutions are actively exploring alignment strategies, safety protocols, and global governance models to prepare for the eventuality of AGI. While estimates vary wildly—some suggesting it could arrive in a few decades, others doubting it will ever be achieved—progress in large language models, neural networks, reinforcement learning, and multi-modal AI systems has significantly shortened the timeline in the eyes of many experts. AGI’s arrival could be the most transformative event in human history, offering a new era of abundance and innovation, or it could pose catastrophic risks if mishandled. The stakes are incredibly high, which is why the conversation around AGI is no longer just about computer science, but also about philosophy, sociology, economics, ethics, and global policy. Whether seen as humanity’s greatest invention or its final one, AGI sits at the crossroads of our future, demanding careful thought, collaboration, and responsibility at every step. Building on the concept of AGI, the journey from today’s narrow AI systems to true general intelligence is expected to be both incremental and unpredictable. While current AI models like GPT-4 or Claude 3.5 show impressive capabilities in language understanding, reasoning, and even creative expression, they still lack core components of general intelligence—such as persistent memory, common sense reasoning, emotional awareness, goal-directed behavior over long timeframes, and adaptability to truly novel environments. Researchers are exploring different paths to overcome these limitations, including architectures that combine symbolic reasoning with deep learning, agentic frameworks that simulate goal pursuit, and memory-enhanced systems capable of learning and adapting continuously. Another promising direction involves embedding AI within real-world environments, allowing it to learn through embodied experience much like a human child does. However, with these advancements come increasingly complex challenges in alignment and interpretability. How do we ensure an AGI doesn’t misinterpret its goals or find dangerous shortcuts to achieve them? How do we audit decisions made by a system that might be smarter than its creators? These issues demand rigorous research in AI safety and alignment theory, with contributions from diverse disciplines including neuroscience, psychology, philosophy, and law. Moreover, the geopolitical implications of AGI development are immense. Nations and corporations are in a quiet race to achieve dominance in this space, which could lead to either a new wave of global cooperation—or a highly destabilizing imbalance of power. Some advocate for international treaties to regulate AGI research, while others warn that restrictions may simply push development underground. Public awareness and discourse are also critical: if AGI is to be integrated into human society, the broader public must have a say in shaping the values it upholds and the role it plays. In the end, AGI is not just a technological goal but a societal one—it will reflect the intentions, ambitions, and fears of those who build it. If done right, it could become the ultimate tool to help humanity flourish; if done wrong, it could challenge our very survival. The future is still unwritten, but one thing is certain: the path to AGI will shape the trajectory of civilization for generations to come.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        20,
+        3480
+      ],
+      "id": "86ba007c-f99f-4b6b-9f07-aeafafed0b34",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        3680
+      ],
+      "id": "de8e96f1-da1c-4c26-8949-6f58a6c72e39",
+      "name": "OpenAI Chat Model3",
+      "credentials": {
+        "openAiApi": {
+          "id": "lc39nieTYjYGXFGl",
+          "name": "New OpenAI Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Summarization Chain\n\n"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -380,
+        3460
+      ],
+      "id": "6aab637a-adc0-499f-908a-5b14f9a94e33",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.example_email }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Sales",
+              "description": "Emails that are sales related"
+            },
+            {
+              "category": "CSR",
+              "description": "Emails that are customer service related"
+            }
+          ]
+        },
+        "options": {
+          "multiClass": false,
+          "fallback": "discard",
+          "systemPromptTemplate": "Please classify the text provided by the user into one of the following categories: {categories}, and use the provided formatting instructions below. Don't explain, and only output the json."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        260,
+        3960
+      ],
+      "id": "5a072f96-076d-4a20-bfb0-9078b3586ef0",
+      "name": "Text Classifier"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7089f8ff-7297-496d-838d-5d94cf979c15",
+              "name": "example_email",
+              "value": "I’m interested in your AI automation services—particularly around marketing and lead generation. Could you share pricing, setup time, and whether you offer custom solutions?",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        80,
+        3960
+      ],
+      "id": "16e5c311-7a25-4880-9ba0-e6f9b5ebfe6c",
+      "name": "Edit Fields4"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        220,
+        4160
+      ],
+      "id": "217c94fc-f2bb-4b9d-a4a1-c91a6f160d1f",
+      "name": "OpenAI Chat Model4",
+      "credentials": {
+        "openAiApi": {
+          "id": "lc39nieTYjYGXFGl",
+          "name": "New OpenAI Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Text Classification\n\n"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        3920
+      ],
+      "id": "cc2dd9a6-cdab-42fb-97ae-5326d1446bd4",
+      "name": "Sticky Note7"
+    }
+  ],
+  "pinData": {
+    "Edit Fields4": [
+      {
+        "json": {
+          "example_email": "I’m interested in your AI automation services—particularly around marketing and lead generation. Could you share pricing, setup time, and whether you offer custom solutions?"
+        }
+      },
+      {
+        "json": {
+          "example_email": "Our AI cold calling agent stopped responding during calls today. We tried restarting, but it didn’t help. Please check workflow ID #AI-002347—this is urgent."
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        []
+      ]
+    },
+    "Image": {
+      "main": [
+        [
+          {
+            "node": "Analyse Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Audio": {
+      "main": [
+        [
+          {
+            "node": "Transcribe Recording",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Translate Recording",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Sentiment Analysis",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Sentiment Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Summarization Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Summarization Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarization Chain": {
+      "main": [
+        []
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "bab58e1c-7514-4372-b505-9ff57a2f73f0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b28d66d14f40eb70ce76982ff5a26f67c6ff8a3b5e252b0e32973f57f9e31707"
+  },
+  "id": "164V8Iv7Ubwl36bN",
+  "tags": []
+}
