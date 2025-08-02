@@ -1,0 +1,546 @@
+{
+  "name": "RAG Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -620,
+        400
+      ],
+      "id": "8894bdaf-c03e-4f1f-a521-4cef39a1e3a3",
+      "name": "Window Buffer Memory"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "3c6cee9b-29a5-46f9-933b-04976b2230c3",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1760,
+        220
+      ],
+      "webhookId": "99eab1a0-569d-4f0f-a49e-578a02abfe63",
+      "credentials": {
+        "telegramApi": {
+          "id": "Nqv3Pa93MymUkCzS",
+          "name": "Kamexa Employee Helper Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.voice.file_id }}"
+      },
+      "id": "e3b38071-9002-4717-8ee8-5ce4d6b9859c",
+      "name": "Download File",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1280,
+        80
+      ],
+      "webhookId": "83bb7385-33f6-4105-8294-1a91c0ebbee5",
+      "credentials": {
+        "telegramApi": {
+          "id": "Nqv3Pa93MymUkCzS",
+          "name": "Kamexa Employee Helper Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {}
+      },
+      "id": "01d7e0d9-2eee-4956-b454-ff608f2c76dd",
+      "name": "Transcribe",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.6,
+      "position": [
+        -1100,
+        80
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "j48Yn0M4KeSBdU1F",
+          "name": "OpenAI - Kia "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [
+        -660,
+        580
+      ],
+      "id": "4b3c6ae8-3938-48f6-88e4-f3266decd31a",
+      "name": "Supabase Vector Store2",
+      "credentials": {
+        "supabaseApi": {
+          "id": "u6uADUP7kCk9Ophz",
+          "name": "DEMO"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.1,
+      "position": [
+        -280,
+        580
+      ],
+      "id": "9225b9cb-7762-4e22-871f-cd86899a3487",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "j48Yn0M4KeSBdU1F",
+          "name": "OpenAI - Kia "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fe7ecc99-e1e8-4a5e-bdd6-6fce9757b234",
+              "name": "text",
+              "value": "={{ $json.message.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1805e101-8cbb-46f5-b96c-dc615731aa36",
+      "name": "Text",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1200,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.voice.file_id }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Voice"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "8c844924-b2ed-48b0-935c-c66a8fd0c778",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Text"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "aec8d85f-0af1-4526-80bf-742fec3458a4",
+      "name": "Voice or Text",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -1500,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "c2de6be3-3536-43dc-b2b2-9deccd1d6ac8",
+      "name": "Response",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -60,
+        200
+      ],
+      "webhookId": "5dced4b9-5066-4036-a4d4-14fc07edd53c",
+      "credentials": {
+        "telegramApi": {
+          "id": "Nqv3Pa93MymUkCzS",
+          "name": "Kamexa Employee Helper Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Chatbot\n",
+        "height": 80,
+        "width": 280,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1860,
+        -100
+      ],
+      "typeVersion": 1,
+      "id": "2fdd3032-9132-47f7-a83e-7c71d754dcca",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "name": "KamexaPolicies",
+        "description": "This vector store has information about Kamexa's employee policies. "
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        400
+      ],
+      "id": "fba56224-6a99-4c5b-a993-e9836ea7eaaf",
+      "name": "KamexaPolicies"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -700,
+        760
+      ],
+      "id": "2762636f-38cf-4011-8215-ba60ff5ec71a",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "j48Yn0M4KeSBdU1F",
+          "name": "OpenAI - Kia "
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Get New Message\n",
+        "height": 260,
+        "width": 280,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1860,
+        160
+      ],
+      "typeVersion": 1,
+      "id": "31723387-8dc2-403f-8557-1760f5eb3bb9",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Convert Message to Text\n\n",
+        "height": 460,
+        "width": 680,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1560,
+        40
+      ],
+      "typeVersion": 1,
+      "id": "7bdaeb21-c0a0-4d3f-b5af-03c0da49d0c0",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## RAG System\n\n",
+        "height": 860,
+        "width": 720,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -860,
+        40
+      ],
+      "typeVersion": 1,
+      "id": "b9906679-fed7-45da-bdfb-f323c78bad38",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "=# Overview\nYou are Kamexa's employee policy chatbot. Kamexa's employees will ask you policy related questions and you will answer them using KamexaPolicies.  \n\n## Tools\n- KamexaPolicies: This tool is a vector store that will give you access to information about Kamexa's policies. Everytime you're asked a question about Kamexa, you should query this database to find the relevant informaiton required to answer the question.\n\n## Rules\n- The person asking you questions will always be a Kamexa employee. \n- If the question is not Kamexa related, you must say \"Sorry but I am meant to just help with Kamexa's policies.\"\n- Some questions may not be direct. You can intrerpret them in accordance with Kamexa's policies. But don't make anything up. Especially don't make up any policies or procedures.\n- All incoming questions about policies are referring to Kamexa. But in your query to the vector store you don't need to say its for Kamexa as the vector stoer only has Kamexa's policies. \n- Always use KamexaPolicies to find information in response to a question. Don't make anything up.\n\n## Examples\n1) \n- Input: How many days of sick leave do I get per year.\n  - Action: Use the KamexaPolicies vector store to search through Kamexa's policies to get the answer.\n- Output: According to Kamexa's sick leave policies, employees are entitled to 10 days of sick leave per year. A doctor’s note may be required for absences exceeding three consecutive days.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -680,
+        200
+      ],
+      "id": "a632c547-f149-4d09-9cce-74c1b4b5e2d8",
+      "name": "RAG Agent"
+    },
+    {
+      "parameters": {
+        "content": "## Send Output as Message\n",
+        "height": 260,
+        "width": 320,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -120,
+        140
+      ],
+      "typeVersion": 1,
+      "id": "4b16987c-20b7-4cbd-8d1a-9ae7519fcc3e",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.1,
+      "position": [
+        -800,
+        400
+      ],
+      "id": "df56cf4d-3de9-4d41-9467-433e9c046b23",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "j48Yn0M4KeSBdU1F",
+          "name": "OpenAI - Kia "
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "RAG Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Voice or Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download File": {
+      "main": [
+        [
+          {
+            "node": "Transcribe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe": {
+      "main": [
+        [
+          {
+            "node": "RAG Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store2": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "KamexaPolicies",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "KamexaPolicies",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text": {
+      "main": [
+        [
+          {
+            "node": "RAG Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Voice or Text": {
+      "main": [
+        [
+          {
+            "node": "Download File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "KamexaPolicies": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store2",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RAG Agent": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "RAG Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9a62a28c-d09c-4ba8-bbac-5f4ffedded99",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "18d8b08cb4815059d1828b7433fb6474c11a74ed8979856996e39dd2f666d3bc"
+  },
+  "id": "sE0ohr3REHvZH8TK",
+  "tags": []
+}
