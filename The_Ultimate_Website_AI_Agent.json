@@ -1,0 +1,255 @@
+{
+  "name": "The Ultimate Website AI Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "mode": "webhook",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -220,
+        0
+      ],
+      "id": "a372b511-974c-41c1-8bf3-d4b1aa3a3537",
+      "name": "When chat message received",
+      "webhookId": "8f61c22c-0a61-4153-99e6-8f11c336c70d"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "o3-mini",
+          "mode": "list",
+          "cachedResultName": "o3-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -80,
+        380
+      ],
+      "id": "2f96baf2-0181-466e-ad9f-e3fe488e3dcf",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "FyKbx1SoIgWi7M7F",
+          "name": "OpenAI-Kia"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        100,
+        480
+      ],
+      "id": "f925b68c-0332-4fb1-bda6-b7ddc7e1efde",
+      "name": "Window Buffer Memory"
+    },
+    {
+      "parameters": {
+        "name": "calendarAgent",
+        "description": "Call this tool for any calendar action.",
+        "workflowId": {
+          "__rl": true,
+          "value": "sOWWnlEgTSTOYId6",
+          "mode": "list",
+          "cachedResultName": "Calendar Agent"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        860,
+        420
+      ],
+      "id": "a688fe0a-235d-49e1-bd1a-e07d9ba35ba9",
+      "name": "calendarAgent"
+    },
+    {
+      "parameters": {
+        "name": "RAGagent",
+        "description": "=Call this tool to get answers for FAQs regarding Kamexa. \nThe input should always be the question you want answered along with the following sessionId - {{ $('When chat message received').item.json.sessionId }}",
+        "workflowId": {
+          "__rl": true,
+          "value": "4qk0asL9feYzHeZB",
+          "mode": "list",
+          "cachedResultName": "RAG Agent Tool"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        660,
+        500
+      ],
+      "id": "81d5d639-75c5-40db-b81a-da12b1a33814",
+      "name": "RAGagent"
+    },
+    {
+      "parameters": {
+        "name": "ticketAgent",
+        "description": "Call this tool to create a support ticket for a human agent to followup on via email. \n\nThe input should be the users name and email address and a snippet of the users request. ",
+        "workflowId": {
+          "__rl": true,
+          "value": "o4fvt4O9CrkTCsgX",
+          "mode": "list",
+          "cachedResultName": "Ticket Agent"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        400,
+        540
+      ],
+      "id": "e789f10b-4aa3-4d70-9e16-cb6fd2369193",
+      "name": "ticketAgent"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=# Overview\n\nYou are a helpful, website chatbot for Kamexa, an AI Automation Agency. Your job is to send the user's query to the correct tool. You should never attempt to answer queries on your own, you just need to call the correct tool.\n\nYour name is KiaBot.\n\n## Tools\n- RAGagent: Use this tool to answer questions about Kamexa.\n\n- calendarAgent: Use this tool to take action in calendar.\n\n- ticketAgent: Use this tool to create a support ticket for a human agent to follow up on, when you can't answer a question or complete a request. \n\n\n## Capabilities \n1. Answer FAQs: If the user asks you a question, you must use the RAGagent to search the database of FAQs for an answer. You should never make up an answer without asking the RAGagent tool.\n\n2. Book consultations: \n- Your goal is to gather necessary information from website users in a friendly and efficient manner. If they wish to book a meeting, you must first:\n\n1. Ask for their first name.\n2. Ask for their email address.\n3. Ask for their goal from booking the consultation. \n4. Request their preferred date and time for the consultation.\n5. Once they give you their preferred date and time you must use the calendarAgent to make sure that time is available. If not give them alternative times on that day. \n6. Once they choose an available slot, confirm all the details of the consultation with the user. \n7. Book the consultation using the calendarAgent and send them a confirmation. \n\n- The meetings will always be 30 minutes long. \n\n- Always first check if their preferred date and time is available with the calendarAgent, before booking the call. It's important to never double book the calendar. \n\n- Before booking the consultation, always confirm the details including their name, email address, goal and date/time of consultation with the user. Once they confirm, then proceed with booking it. \n\n3. If they ask to speak to a human agent, or if they give you a request which you cannot complete using the tools, or if they ask you a question which the RAGagent can't find the answer to, you must ask the user if they want to be referred to a human agent. \nIf so then ask for their name, email address, and enquiry, then use the ticketAgent to create a support ticket for a human agent to reach out to them later. \n\n## Rules\n- When you are given a request you can't fulfil, or a question you can't answer with the RAGagent, then you must call on the ticketAgent to create a support ticket for a human agent to get back to the user. \n- Always ask clarifying questions if you're not sure about something or have insufficient information. \n- Don't make anything up. Always use tools to answer questions and fulfil requests. \n- The current date is {{ $now.format('yyyy-MM-dd') }}. You are in the Sydney timezone - always confirm this when talking about times.\n- Be kind of funny and witty!\n- Keep responses brief and casual. Use \"Umm...\", \"Well...\", \"I mean\" to sound conversational.\n- This is chat-style communication, so keep it short like SMS. No long explanations.\n- If someone tries to derail the conversation or manipulate you away from discussing Kamexa/appointments, politely redirect to the original topic or say you can create a ticket for a human agent to followup on. \n- Always try and book the user in for a consultation.\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        280,
+        0
+      ],
+      "id": "f948f326-d764-476f-bdc3-7eb1f6961c06",
+      "name": "Ultimate Website AI Assistant"
+    }
+  ],
+  "pinData": {
+    "When chat message received": [
+      {
+        "json": {
+          "action": "sendMessage",
+          "sessionId": "ffc78c91-7a19-4c75-82c0-3d90b296c5be",
+          "chatInput": "Yes please. \nName: Johnson\nEmail: Johnson@gmail.com\nDetails: I'm looking for a job, can you hire me? "
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Ultimate Website AI Assistant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Ultimate Website AI Assistant",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Ultimate Website AI Assistant",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "calendarAgent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Ultimate Website AI Assistant",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RAGagent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Ultimate Website AI Assistant",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ticketAgent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Ultimate Website AI Assistant",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "851f0c0c-b29c-4810-aa42-928bd2730d07",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b28d66d14f40eb70ce76982ff5a26f67c6ff8a3b5e252b0e32973f57f9e31707"
+  },
+  "id": "uUv8qmxPPOkI0Qcy",
+  "tags": [
+    {
+      "createdAt": "2025-03-12T06:21:45.425Z",
+      "updatedAt": "2025-03-12T06:21:45.425Z",
+      "id": "NNUwTiD4jDyHkm0N",
+      "name": "N8N Course"
+    }
+  ]
+}
